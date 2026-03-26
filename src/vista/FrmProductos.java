@@ -144,10 +144,24 @@ public class FrmProductos extends javax.swing.JFrame {
             }
 
             Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colCodigo = buscarColumna(columnas, "codigo", "codigo_producto", "cod_producto");
+            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
             String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
             String colImpuesto = buscarColumna(columnas, "impuesto_id", "id_impuesto", "impuesto");
+            String colCosto = buscarColumna(columnas, "costo", "coste", "costo_compra");
+            String colPrecio = buscarColumna(columnas, "precio", "precio_venta", "pvp", "valor_venta");
             String colStock = buscarColumna(columnas, "stock", "existencia");
             String colStockMinimo = buscarColumna(columnas, "stock_minimo", "stockminimo", "stock_min");
+
+            if (colCodigo == null || colNombre == null || colCosto == null || colPrecio == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Faltan columnas base compatibles en la tabla productos (codigo/nombre/costo/precio).",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
 
             if (colProveedor == null) {
                 JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de proveedor compatible.");
@@ -165,12 +179,12 @@ public class FrmProductos extends javax.swing.JFrame {
             }
 
             Map<String, Object> valores = new LinkedHashMap<>();
-            valores.put("codigo", codigo);
-            valores.put("nombre", nombre);
+            valores.put(colCodigo, codigo);
+            valores.put(colNombre, nombre);
             valores.put(colProveedor, proveedor.id);
             valores.put(colImpuesto, impuesto.id);
-            valores.put("costo", costo);
-            valores.put("precio", precio);
+            valores.put(colCosto, costo);
+            valores.put(colPrecio, precio);
 
             if (colStock != null) {
                 valores.put(colStock, stockMinimo);
