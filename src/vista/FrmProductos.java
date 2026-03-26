@@ -4,6 +4,14 @@
  */
 package vista;
 
+import conexion.Conexion;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author herna
@@ -18,6 +26,175 @@ public class FrmProductos extends javax.swing.JFrame {
     public FrmProductos() {
         initComponents();
         setLocationRelativeTo(null);
+        configurarEventos();
+        cargarCombosDesdeBD();
+        inicializarSecciones();
+    }
+
+    private void configurarEventos() {
+        jButton1.addActionListener(e -> guardarProducto());
+        jButton2.addActionListener(e -> limpiarFormulario());
+    }
+
+    private void cargarCombosDesdeBD() {
+        cargarProveedores();
+        cargarImpuestos();
+    }
+
+    private void cargarProveedores() {
+        cbProveedor.removeAllItems();
+        final String sql = "SELECT id, nombre FROM proveedores WHERE activo = 1 ORDER BY nombre";
+
+        try (Connection con = Conexion.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                cbProveedor.addItem(new ComboItem(rs.getInt("id"), rs.getString("nombre")));
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron cargar los proveedores: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void cargarImpuestos() {
+        jComboBox1.removeAllItems();
+        final String sql = "SELECT id, nombre, porcentaje FROM impuestos WHERE activo = 1 ORDER BY id";
+
+        try (Connection con = Conexion.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String etiqueta = rs.getString("nombre") + " (" + rs.getBigDecimal("porcentaje") + "%)";
+                jComboBox1.addItem(new ComboItem(rs.getInt("id"), etiqueta));
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron cargar los impuestos: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void inicializarSecciones() {
+        DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
+        modelo.addElement("Cocina");
+        modelo.addElement("Barra");
+        modelo.addElement("Otros");
+        jComboBox2.setModel(modelo);
+    }
+
+    private void guardarProducto() {
+        String codigo = txtCodigo.getText().trim();
+        String nombre = txtNombre.getText().trim();
+        String costoTexto = jTextField1.getText().trim();
+        String stockMinimoTexto = txtStock.getText().trim();
+        String precioTexto = txtPrecio.getText().trim();
+
+        if (codigo.isEmpty() || nombre.isEmpty() || costoTexto.isEmpty() || stockMinimoTexto.isEmpty() || precioTexto.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Complete todos los campos obligatorios.");
+            return;
+        }
+
+        ComboItem proveedor = (ComboItem) cbProveedor.getSelectedItem();
+        ComboItem impuesto = (ComboItem) jComboBox1.getSelectedItem();
+
+        if (proveedor == null || impuesto == null) {
+            JOptionPane.showMessageDialog(this, "Debe seleccionar proveedor e impuesto.");
+            return;
+        }
+
+        double costo;
+        int stockMinimo;
+        double precio;
+
+        try {
+            costo = Double.parseDouble(costoTexto);
+            stockMinimo = Integer.parseInt(stockMinimoTexto);
+            precio = Double.parseDouble(precioTexto);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Costo, Stock Minimo y Precio deben ser numericos.");
+            return;
+        }
+
+        String seccion = (String) jComboBox2.getSelectedItem();
+        int cocina = "Cocina".equalsIgnoreCase(seccion) ? 1 : 0;
+        int barra = "Barra".equalsIgnoreCase(seccion) ? 1 : 0;
+        int otros = "Otros".equalsIgnoreCase(seccion) ? 1 : 0;
+
+        final String sql = """
+            INSERT INTO productos
+            (codigo, nombre, proveedor_id, impuesto_id, costo, stock, stock_minimo, precio, cocina, barra, otros, activo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+            """;
+
+        try (Connection con = Conexion.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, codigo);
+            ps.setString(2, nombre);
+            ps.setInt(3, proveedor.id);
+            ps.setInt(4, impuesto.id);
+            ps.setDouble(5, costo);
+            ps.setInt(6, 0);
+            ps.setInt(7, stockMinimo);
+            ps.setDouble(8, precio);
+            ps.setInt(9, cocina);
+            ps.setInt(10, barra);
+            ps.setInt(11, otros);
+
+            ps.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Producto guardado correctamente.");
+            limpiarFormulario();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo guardar el producto: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void limpiarFormulario() {
+        txtCodigo.setText("");
+        txtNombre.setText("");
+        jTextField1.setText("0.0000");
+        txtStock.setText("0");
+        txtPrecio.setText("");
+        if (cbProveedor.getItemCount() > 0) {
+            cbProveedor.setSelectedIndex(0);
+        }
+        if (jComboBox1.getItemCount() > 0) {
+            jComboBox1.setSelectedIndex(0);
+        }
+        if (jComboBox2.getItemCount() > 0) {
+            jComboBox2.setSelectedIndex(0);
+        }
+        txtCodigo.requestFocus();
+    }
+
+    private static class ComboItem {
+        private final int id;
+        private final String nombre;
+
+        ComboItem(int id, String nombre) {
+            this.id = id;
+            this.nombre = nombre;
+        }
+
+        @Override
+        public String toString() {
+            return nombre;
+        }
     }
 
     /**
@@ -193,10 +370,10 @@ public class FrmProductos extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnNuevaCategoria;
-    private javax.swing.JComboBox<String> cbProveedor;
+    private javax.swing.JComboBox<Object> cbProveedor;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JComboBox<Object> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
