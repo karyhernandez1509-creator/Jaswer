@@ -1,179 +1,269 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
 package login;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Font;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.RenderingHints;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import conexion.Conexion;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.JOptionPane;
+import vista.FrmProductos;
 
-public class Login extends JFrame {
+/**
+ *
+ * @author MASTER
+ */
+public class Login extends javax.swing.JFrame {
+    
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Login.class.getName());
 
-    private JTextField txtUsuario;
-    private JPasswordField txtContrasena;
-    private JButton btnIngresar;
-    private JLabel lblRecuperar;
-
+    /**
+     * Creates new form Login
+     */
     public Login() {
-        initUI();
-    }
-
-    private void initUI() {
-        setTitle("Login");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 550);
-        setMinimumSize(getSize());
+        initComponents();
         setLocationRelativeTo(null);
-
-        GradientPanel fondo = new GradientPanel();
-        fondo.setLayout(new GridBagLayout());
-
-        GlassCard card = new GlassCard();
-        card.setLayout(new GridBagLayout());
-        card.setBorder(BorderFactory.createEmptyBorder(28, 28, 28, 28));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        gbc.insets = new Insets(8, 0, 8, 0);
-
-        JLabel titulo = new JLabel("Iniciar Sesion");
-        titulo.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 28));
-        titulo.setForeground(new Color(255, 255, 255));
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 16, 0);
-        card.add(titulo, gbc);
-
-        JLabel lblUsuario = new JLabel("Usuario");
-        lblUsuario.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblUsuario.setForeground(new Color(245, 245, 245));
-        gbc.gridy = 1;
-        gbc.insets = new Insets(0, 0, 4, 0);
-        card.add(lblUsuario, gbc);
-
-        txtUsuario = createInputField();
-        gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 10, 0);
-        card.add(txtUsuario, gbc);
-
-        JLabel lblContrasena = new JLabel("Contrasena");
-        lblContrasena.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblContrasena.setForeground(new Color(245, 245, 245));
-        gbc.gridy = 3;
-        gbc.insets = new Insets(0, 0, 4, 0);
-        card.add(lblContrasena, gbc);
-
-        txtContrasena = new JPasswordField();
-        styleInput(txtContrasena);
-        gbc.gridy = 4;
-        gbc.insets = new Insets(0, 0, 16, 0);
-        card.add(txtContrasena, gbc);
-
-        btnIngresar = new JButton("Ingresar");
-        btnIngresar.setFocusPainted(false);
-        btnIngresar.setBorderPainted(false);
-        btnIngresar.setForeground(Color.WHITE);
-        btnIngresar.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 14));
-        btnIngresar.setBackground(new Color(191, 36, 36));
-        btnIngresar.setOpaque(true);
-        btnIngresar.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        gbc.gridy = 5;
-        gbc.insets = new Insets(0, 0, 10, 0);
-        card.add(btnIngresar, gbc);
-
-        lblRecuperar = new JLabel("Recuperar contrasena");
-        lblRecuperar.setForeground(new Color(250, 220, 220));
-        lblRecuperar.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblRecuperar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        lblRecuperar.setToolTipText("Proximamente");
-        gbc.gridy = 6;
-        gbc.insets = new Insets(2, 0, 0, 0);
-        card.add(lblRecuperar, gbc);
-
-        fondo.add(card);
-        setContentPane(fondo);
+        configurarEventos();
     }
 
-    private JTextField createInputField() {
-        JTextField field = new JTextField();
-        styleInput(field);
-        return field;
+    private void configurarEventos() {
+        jButton1.addActionListener(e -> iniciarSesion());
+        jTextField2.addActionListener(e -> iniciarSesion());
+        jLabel4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                JOptionPane.showMessageDialog(
+                    Login.this,
+                    "La opcion de recuperar contrasena estara disponible proximamente.",
+                    "Recuperar contrasena",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+        });
     }
 
-    private void styleInput(JTextField field) {
-        field.setForeground(Color.WHITE);
-        field.setCaretColor(Color.WHITE);
-        field.setBackground(new Color(255, 255, 255, 28));
-        field.setOpaque(true);
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(255, 255, 255, 90), 1),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
+    private void iniciarSesion() {
+        String usuario = jTextField1.getText().trim();
+        String contrasena = jTextField2.getText().trim();
+
+        if (usuario.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese su usuario.");
+            jTextField1.requestFocus();
+            return;
+        }
+
+        if (contrasena.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese su contrasena.");
+            jTextField2.requestFocus();
+            return;
+        }
+
+        if (autenticarUsuario(usuario, contrasena)) {
+            new FrmProductos().setVisible(true);
+            dispose();
+            return;
+        }
+
+        JOptionPane.showMessageDialog(
+            this,
+            "Usuario o contrasena incorrectos.",
+            "Credenciales invalidas",
+            JOptionPane.WARNING_MESSAGE
+        );
     }
 
-    private static class GradientPanel extends JPanel {
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            GradientPaint gradient = new GradientPaint(
-                0, 0, new Color(122, 0, 0),
-                getWidth(), getHeight(), new Color(225, 45, 45)
+    private boolean autenticarUsuario(String usuario, String contrasena) {
+        final String sql = "SELECT 1 FROM usuarios WHERE usuario = ? AND contrasena = ? LIMIT 1";
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo conectar a la base de datos.",
+                    "Error de conexion",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return false;
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, usuario);
+                ps.setString(2, contrasena);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Error al validar credenciales: " + e.getMessage(),
+                "Error SQL",
+                JOptionPane.ERROR_MESSAGE
             );
-            g2.setPaint(gradient);
-            g2.fillRect(0, 0, getWidth(), getHeight());
-            g2.dispose();
+            return false;
         }
     }
 
-    private static class GlassCard extends JPanel {
-        GlassCard() {
-            setOpaque(false);
-        }
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new Color(255, 255, 255, 35));
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 26, 26);
-            g2.setColor(new Color(255, 255, 255, 120));
-            g2.setStroke(new BasicStroke(1.3f));
-            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 26, 26);
-            g2.dispose();
-        }
+        jPanel2 = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jTextField1 = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        jTextField2 = new javax.swing.JTextField();
+        jButton1 = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
 
-        @Override
-        public java.awt.Dimension getPreferredSize() {
-            return new java.awt.Dimension(410, 360);
-        }
-    }
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setBackground(new java.awt.Color(102, 255, 102));
+        setForeground(new java.awt.Color(255, 51, 0));
 
-    public static void main(String[] args) {
+        jPanel2.setBackground(new java.awt.Color(255, 204, 204));
+
+        jPanel1.setBackground(new java.awt.Color(217, 141, 141));
+        jPanel1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+
+        jLabel1.setFont(new java.awt.Font("Monocraft", 1, 24)); // NOI18N
+        jLabel1.setText("Login");
+
+        jLabel2.setFont(new java.awt.Font("Monocraft", 1, 18)); // NOI18N
+        jLabel2.setText("Usuario:");
+
+        jLabel3.setFont(new java.awt.Font("Monocraft", 1, 18)); // NOI18N
+        jLabel3.setText("Contraseña:");
+
+        jButton1.setBackground(new java.awt.Color(204, 204, 204));
+        jButton1.setFont(new java.awt.Font("Monocraft", 3, 14)); // NOI18N
+        jButton1.setText("Ingresar");
+        jButton1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(51, 51, 255));
+        jLabel4.setText("Recuperar contraseña");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addGap(179, 179, 179))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(26, 26, 26)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(16, 16, 16))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 271, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3)
+                            .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 271, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(155, Short.MAX_VALUE))))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(24, 24, 24)
+                .addComponent(jLabel1)
+                .addGap(41, 41, 41)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(31, 31, 31)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 79, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addGap(20, 20, 20))
+        );
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(77, 77, 77)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(61, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(44, 44, 44)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(23, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException ignored) {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
+            logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
 
-        SwingUtilities.invokeLater(() -> new Login().setVisible(true));
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(() -> new Login().setVisible(true));
     }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JTextField jTextField1;
+    private javax.swing.JTextField jTextField2;
+    // End of variables declaration//GEN-END:variables
 }
