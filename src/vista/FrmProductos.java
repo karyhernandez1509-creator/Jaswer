@@ -6,9 +6,16 @@ package vista;
 
 import conexion.Conexion;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 
@@ -130,28 +137,71 @@ public class FrmProductos extends javax.swing.JFrame {
         int barra = "Barra".equalsIgnoreCase(seccion) ? 1 : 0;
         int otros = "Otros".equalsIgnoreCase(seccion) ? 1 : 0;
 
-        final String sql = """
-            INSERT INTO productos
-            (codigo, nombre, proveedor_id, impuesto_id, costo, stock, stock_minimo, precio, cocina, barra, otros, activo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-            """;
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
+                return;
+            }
 
-        try (Connection con = Conexion.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
+            String colImpuesto = buscarColumna(columnas, "impuesto_id", "id_impuesto", "impuesto");
+            String colStock = buscarColumna(columnas, "stock", "existencia");
+            String colStockMinimo = buscarColumna(columnas, "stock_minimo", "stockminimo", "stock_min");
 
-            ps.setString(1, codigo);
-            ps.setString(2, nombre);
-            ps.setInt(3, proveedor.id);
-            ps.setInt(4, impuesto.id);
-            ps.setDouble(5, costo);
-            ps.setInt(6, 0);
-            ps.setInt(7, stockMinimo);
-            ps.setDouble(8, precio);
-            ps.setInt(9, cocina);
-            ps.setInt(10, barra);
-            ps.setInt(11, otros);
+            if (colProveedor == null) {
+                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de proveedor compatible.");
+                return;
+            }
 
-            ps.executeUpdate();
+            if (colImpuesto == null) {
+                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de impuesto compatible.");
+                return;
+            }
+
+            if (colStock == null && colStockMinimo == null) {
+                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de stock compatible.");
+                return;
+            }
+
+            Map<String, Object> valores = new LinkedHashMap<>();
+            valores.put("codigo", codigo);
+            valores.put("nombre", nombre);
+            valores.put(colProveedor, proveedor.id);
+            valores.put(colImpuesto, impuesto.id);
+            valores.put("costo", costo);
+            valores.put("precio", precio);
+
+            if (colStock != null) {
+                valores.put(colStock, stockMinimo);
+            }
+
+            if (colStockMinimo != null && !colStockMinimo.equals(colStock)) {
+                valores.put(colStockMinimo, stockMinimo);
+            }
+
+            if (columnas.contains("cocina")) {
+                valores.put("cocina", cocina);
+            }
+            if (columnas.contains("barra")) {
+                valores.put("barra", barra);
+            }
+            if (columnas.contains("otros")) {
+                valores.put("otros", otros);
+            }
+            if (columnas.contains("activo")) {
+                valores.put("activo", 1);
+            }
+
+            String sql = construirInsert("productos", valores);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                int index = 1;
+                for (Object valor : valores.values()) {
+                    ps.setObject(index++, valor);
+                }
+                ps.executeUpdate();
+            }
+
             JOptionPane.showMessageDialog(this, "Producto guardado correctamente.");
             limpiarFormulario();
         } catch (SQLException ex) {
@@ -162,6 +212,33 @@ public class FrmProductos extends javax.swing.JFrame {
                 JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    private Set<String> obtenerColumnasTabla(Connection con, String tabla) throws SQLException {
+        Set<String> columnas = new HashSet<>();
+        DatabaseMetaData metaData = con.getMetaData();
+        try (ResultSet rs = metaData.getColumns(con.getCatalog(), null, tabla, null)) {
+            while (rs.next()) {
+                columnas.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        return columnas;
+    }
+
+    private String buscarColumna(Set<String> columnas, String... candidatas) {
+        for (String candidata : candidatas) {
+            if (columnas.contains(candidata.toLowerCase())) {
+                return candidata;
+            }
+        }
+        return null;
+    }
+
+    private String construirInsert(String tabla, Map<String, Object> valores) {
+        List<String> columnas = new ArrayList<>(valores.keySet());
+        String columnasTexto = String.join(", ", columnas);
+        String placeholders = String.join(", ", java.util.Collections.nCopies(columnas.size(), "?"));
+        return "INSERT INTO " + tabla + " (" + columnasTexto + ") VALUES (" + placeholders + ")";
     }
 
     private void limpiarFormulario() {
