@@ -42,12 +42,16 @@ public class FrmProductos extends javax.swing.JFrame {
         jComboBox1 = new javax.swing.JComboBox<>();
         jLabel6 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
-        jLabel7 = new javax.swing.JLabel();
         txtStock = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtPrecio = new javax.swing.JTextField();
+        panelSeccion = new javax.swing.JPanel();
+        btnNuevaCategoria = new javax.swing.JButton();
+        jLabel7 = new javax.swing.JLabel();
+        jComboBox2 = new javax.swing.JComboBox<>();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Productos");
@@ -60,7 +64,7 @@ public class FrmProductos extends javax.swing.JFrame {
 
         jLabel1.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("EL JASWER DEL SOFWER (me gustas)");
+        jLabel1.setText("EL JASWER DEL SOFWER");
         jLabel1.setPreferredSize(new java.awt.Dimension(20, 15));
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 15, 480, 30));
 
@@ -110,23 +114,46 @@ public class FrmProductos extends javax.swing.JFrame {
         });
         jPanel2.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, 140, 30));
 
-        jLabel7.setText("Stock");
-        jPanel2.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 260, -1, -1));
-
         txtStock.setText("0");
-        jPanel2.add(txtStock, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 280, 140, 30));
+        jPanel2.add(txtStock, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 340, 140, 30));
 
         jLabel8.setText("Stock Minimo");
         jPanel2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 320, -1, -1));
 
-        jTextField2.setText("txtStockMinimo");
-        jPanel2.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 340, 140, 30));
-
         jLabel9.setText("Precio");
-        jPanel2.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 320, -1, -1));
-        jPanel2.add(txtPrecio, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 340, 140, 30));
+        jPanel2.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, -1, -1));
+        jPanel2.add(txtPrecio, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 400, 140, 30));
 
-        getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, 880, 470));
+        panelSeccion.setBackground(new java.awt.Color(240, 240, 240));
+        panelSeccion.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        btnNuevaCategoria.setBackground(new java.awt.Color(0, 153, 0));
+        btnNuevaCategoria.setFont(new java.awt.Font("Arial", 1, 20)); // NOI18N
+        btnNuevaCategoria.setForeground(new java.awt.Color(255, 255, 255));
+        btnNuevaCategoria.setText("+");
+        btnNuevaCategoria.setPreferredSize(new java.awt.Dimension(50, 50));
+        btnNuevaCategoria.setVerifyInputWhenFocusTarget(false);
+        panelSeccion.add(btnNuevaCategoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 40, 40));
+
+        jLabel7.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        jLabel7.setForeground(new java.awt.Color(80, 80, 80));
+        jLabel7.setText("Seleccione una Sección");
+        panelSeccion.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 20, 250, 20));
+
+        jPanel2.add(panelSeccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 450, 280, 60));
+
+        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jPanel2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 530, 250, 30));
+
+        jButton1.setBackground(new java.awt.Color(51, 153, 0));
+        jButton1.setText("Guardar");
+        jPanel2.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 30, -1, -1));
+
+        jButton2.setBackground(new java.awt.Color(204, 0, 0));
+        jButton2.setText("Cancelar");
+        jPanel2.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, -1, -1));
+
+        getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, 880, 720));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -165,8 +192,12 @@ public class FrmProductos extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnNuevaCategoria;
     private javax.swing.JComboBox<String> cbProveedor;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -179,7 +210,7 @@ public class FrmProductos extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JPanel panelSeccion;
     private javax.swing.JTextField txtCodigo;
     private javax.swing.JTextField txtNombre;
     private javax.swing.JTextField txtPrecio;
