@@ -52,6 +52,7 @@ public class FrmProductos extends javax.swing.JFrame {
         jComboBox2 = new javax.swing.JComboBox<>();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        btnNuevoProveedor = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Productos");
@@ -90,21 +91,21 @@ public class FrmProductos extends javax.swing.JFrame {
         jPanel2.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 100, 830, 30));
 
         jLabel4.setText("Proveedor");
-        jPanel2.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 140, -1, -1));
+        jPanel2.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 150, -1, -1));
 
         cbProveedor.setBackground(new java.awt.Color(153, 0, 0));
         cbProveedor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jPanel2.add(cbProveedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 160, 300, 30));
+        jPanel2.add(cbProveedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 180, 300, 30));
 
         jLabel5.setText("Impuesto");
-        jPanel2.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 200, -1, -1));
+        jPanel2.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, -1, -1));
 
         jComboBox1.setBackground(new java.awt.Color(153, 0, 0));
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jPanel2.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, 300, 30));
+        jPanel2.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 240, 300, 30));
 
         jLabel6.setText("Costo *");
-        jPanel2.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 260, -1, -1));
+        jPanel2.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, -1, -1));
 
         jTextField1.setText("0.0000");
         jTextField1.addActionListener(new java.awt.event.ActionListener() {
@@ -112,17 +113,17 @@ public class FrmProductos extends javax.swing.JFrame {
                 jTextField1ActionPerformed(evt);
             }
         });
-        jPanel2.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, 140, 30));
+        jPanel2.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 300, 140, 30));
 
         txtStock.setText("0");
-        jPanel2.add(txtStock, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 340, 140, 30));
+        jPanel2.add(txtStock, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 360, 140, 30));
 
         jLabel8.setText("Stock");
-        jPanel2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 320, -1, -1));
+        jPanel2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 340, -1, -1));
 
         jLabel9.setText("Precio");
-        jPanel2.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, -1, -1));
-        jPanel2.add(txtPrecio, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 400, 140, 30));
+        jPanel2.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 400, -1, -1));
+        jPanel2.add(txtPrecio, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 420, 140, 30));
 
         panelSeccion.setBackground(new java.awt.Color(240, 240, 240));
         panelSeccion.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -137,13 +138,13 @@ public class FrmProductos extends javax.swing.JFrame {
 
         jLabel7.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(80, 80, 80));
-        jLabel7.setText("Seleccione una Sección");
+        jLabel7.setText("Seleccione una Categoria");
         panelSeccion.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 20, 250, 20));
 
-        jPanel2.add(panelSeccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 450, 280, 60));
+        jPanel2.add(panelSeccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 470, 280, 60));
 
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jPanel2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 530, 250, 30));
+        jPanel2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 550, 250, 30));
 
         jButton1.setBackground(new java.awt.Color(51, 153, 0));
         jButton1.setText("Guardar");
@@ -153,18 +154,24 @@ public class FrmProductos extends javax.swing.JFrame {
         jButton2.setText("Cancelar");
         jPanel2.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, -1, -1));
 
+        btnNuevoProveedor.setBackground(new java.awt.Color(0, 153, 0));
+        btnNuevoProveedor.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        btnNuevoProveedor.setForeground(new java.awt.Color(255, 255, 255));
+        btnNuevoProveedor.setText("+");
+        jPanel2.add(btnNuevoProveedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 140, 45, 30));
+
         getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, 880, 720));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txtCodigoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCodigoActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtCodigoActionPerformed
-
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextField1ActionPerformed
+
+    private void txtCodigoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCodigoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtCodigoActionPerformed
 
     /**
      * @param args the command line arguments
@@ -193,6 +200,7 @@ public class FrmProductos extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnNuevaCategoria;
+    private javax.swing.JButton btnNuevoProveedor;
     private javax.swing.JComboBox<String> cbProveedor;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
