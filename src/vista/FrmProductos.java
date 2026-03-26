@@ -294,7 +294,7 @@ public class FrmProductos extends javax.swing.JFrame {
         txtStock.setText("0");
         jPanel2.add(txtStock, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 340, 140, 30));
 
-        jLabel8.setText("Stock Minimo");
+        jLabel8.setText("Stock");
         jPanel2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 320, -1, -1));
 
         jLabel9.setText("Precio");
