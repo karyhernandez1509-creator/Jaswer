@@ -471,7 +471,7 @@ public class FrmProductos extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnNuevaCategoria;
     private javax.swing.JButton btnNuevoProveedor;
-    private javax.swing.JComboBox<String> cbProveedor;
+    private javax.swing.JComboBox<Object> cbProveedor;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JComboBox<Object> jComboBox1;
