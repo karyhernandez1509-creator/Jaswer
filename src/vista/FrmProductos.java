@@ -4,6 +4,21 @@
  */
 package vista;
 
+import conexion.Conexion;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author herna
@@ -18,6 +33,259 @@ public class FrmProductos extends javax.swing.JFrame {
     public FrmProductos() {
         initComponents();
         setLocationRelativeTo(null);
+        configurarEventos();
+        cargarCombosDesdeBD();
+        inicializarSecciones();
+    }
+
+    private void configurarEventos() {
+        jButton1.addActionListener(e -> guardarProducto());
+        jButton2.addActionListener(e -> limpiarFormulario());
+    }
+
+    private void cargarCombosDesdeBD() {
+        cargarProveedores();
+        cargarImpuestos();
+    }
+
+    private void cargarProveedores() {
+        cbProveedor.removeAllItems();
+        final String sql = "SELECT id, nombre FROM proveedores WHERE activo = 1 ORDER BY nombre";
+
+        try (Connection con = Conexion.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                cbProveedor.addItem(new ComboItem(rs.getInt("id"), rs.getString("nombre")));
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron cargar los proveedores: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void cargarImpuestos() {
+        jComboBox1.removeAllItems();
+        final String sql = "SELECT id, nombre, porcentaje FROM impuestos WHERE activo = 1 ORDER BY id";
+
+        try (Connection con = Conexion.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String etiqueta = rs.getString("nombre") + " (" + rs.getBigDecimal("porcentaje") + "%)";
+                jComboBox1.addItem(new ComboItem(rs.getInt("id"), etiqueta));
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron cargar los impuestos: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void inicializarSecciones() {
+        DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
+        modelo.addElement("Cocina");
+        modelo.addElement("Barra");
+        modelo.addElement("Otros");
+        jComboBox2.setModel(modelo);
+    }
+
+    private void guardarProducto() {
+        String codigo = txtCodigo.getText().trim();
+        String nombre = txtNombre.getText().trim();
+        String costoTexto = jTextField1.getText().trim();
+        String stockMinimoTexto = txtStock.getText().trim();
+        String precioTexto = txtPrecio.getText().trim();
+
+        if (codigo.isEmpty() || nombre.isEmpty() || costoTexto.isEmpty() || stockMinimoTexto.isEmpty() || precioTexto.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Complete todos los campos obligatorios.");
+            return;
+        }
+
+        ComboItem proveedor = (ComboItem) cbProveedor.getSelectedItem();
+        ComboItem impuesto = (ComboItem) jComboBox1.getSelectedItem();
+
+        if (proveedor == null || impuesto == null) {
+            JOptionPane.showMessageDialog(this, "Debe seleccionar proveedor e impuesto.");
+            return;
+        }
+
+        double costo;
+        int stockMinimo;
+        double precio;
+
+        try {
+            costo = Double.parseDouble(costoTexto);
+            stockMinimo = Integer.parseInt(stockMinimoTexto);
+            precio = Double.parseDouble(precioTexto);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Costo, Stock Minimo y Precio deben ser numericos.");
+            return;
+        }
+
+        String seccion = (String) jComboBox2.getSelectedItem();
+        int cocina = "Cocina".equalsIgnoreCase(seccion) ? 1 : 0;
+        int barra = "Barra".equalsIgnoreCase(seccion) ? 1 : 0;
+        int otros = "Otros".equalsIgnoreCase(seccion) ? 1 : 0;
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colCodigo = buscarColumna(columnas, "codigo", "codigo_producto", "cod_producto");
+            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
+            String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
+            String colImpuesto = buscarColumna(columnas, "impuesto_id", "id_impuesto", "impuesto");
+            String colCosto = buscarColumna(columnas, "costo", "coste", "costo_compra");
+            String colPrecio = buscarColumna(columnas, "precio", "precio_venta", "pvp", "valor_venta");
+            String colStock = buscarColumna(columnas, "stock", "existencia");
+            String colStockMinimo = buscarColumna(columnas, "stock_minimo", "stockminimo", "stock_min");
+
+            if (colCodigo == null || colNombre == null || colCosto == null || colPrecio == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Faltan columnas base compatibles en la tabla productos (codigo/nombre/costo/precio).",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            if (colProveedor == null) {
+                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de proveedor compatible.");
+                return;
+            }
+
+            if (colImpuesto == null) {
+                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de impuesto compatible.");
+                return;
+            }
+
+            if (colStock == null && colStockMinimo == null) {
+                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de stock compatible.");
+                return;
+            }
+
+            Map<String, Object> valores = new LinkedHashMap<>();
+            valores.put(colCodigo, codigo);
+            valores.put(colNombre, nombre);
+            valores.put(colProveedor, proveedor.id);
+            valores.put(colImpuesto, impuesto.id);
+            valores.put(colCosto, costo);
+            valores.put(colPrecio, precio);
+
+            if (colStock != null) {
+                valores.put(colStock, stockMinimo);
+            }
+
+            if (colStockMinimo != null && !colStockMinimo.equals(colStock)) {
+                valores.put(colStockMinimo, stockMinimo);
+            }
+
+            if (columnas.contains("cocina")) {
+                valores.put("cocina", cocina);
+            }
+            if (columnas.contains("barra")) {
+                valores.put("barra", barra);
+            }
+            if (columnas.contains("otros")) {
+                valores.put("otros", otros);
+            }
+            if (columnas.contains("activo")) {
+                valores.put("activo", 1);
+            }
+
+            String sql = construirInsert("productos", valores);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                int index = 1;
+                for (Object valor : valores.values()) {
+                    ps.setObject(index++, valor);
+                }
+                ps.executeUpdate();
+            }
+
+            JOptionPane.showMessageDialog(this, "Producto guardado correctamente.");
+            limpiarFormulario();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo guardar el producto: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private Set<String> obtenerColumnasTabla(Connection con, String tabla) throws SQLException {
+        Set<String> columnas = new HashSet<>();
+        DatabaseMetaData metaData = con.getMetaData();
+        try (ResultSet rs = metaData.getColumns(con.getCatalog(), null, tabla, null)) {
+            while (rs.next()) {
+                columnas.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        return columnas;
+    }
+
+    private String buscarColumna(Set<String> columnas, String... candidatas) {
+        for (String candidata : candidatas) {
+            if (columnas.contains(candidata.toLowerCase())) {
+                return candidata;
+            }
+        }
+        return null;
+    }
+
+    private String construirInsert(String tabla, Map<String, Object> valores) {
+        List<String> columnas = new ArrayList<>(valores.keySet());
+        String columnasTexto = String.join(", ", columnas);
+        String placeholders = String.join(", ", java.util.Collections.nCopies(columnas.size(), "?"));
+        return "INSERT INTO " + tabla + " (" + columnasTexto + ") VALUES (" + placeholders + ")";
+    }
+
+    private void limpiarFormulario() {
+        txtCodigo.setText("");
+        txtNombre.setText("");
+        jTextField1.setText("0.0000");
+        txtStock.setText("0");
+        txtPrecio.setText("");
+        if (cbProveedor.getItemCount() > 0) {
+            cbProveedor.setSelectedIndex(0);
+        }
+        if (jComboBox1.getItemCount() > 0) {
+            jComboBox1.setSelectedIndex(0);
+        }
+        if (jComboBox2.getItemCount() > 0) {
+            jComboBox2.setSelectedIndex(0);
+        }
+        txtCodigo.requestFocus();
+    }
+
+    private static class ComboItem {
+        private final int id;
+        private final String nombre;
+
+        ComboItem(int id, String nombre) {
+            this.id = id;
+            this.nombre = nombre;
+        }
+
+        @Override
+        public String toString() {
+            return nombre;
+        }
     }
 
     /**
@@ -206,7 +474,7 @@ public class FrmProductos extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cbProveedor;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JComboBox<Object> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
