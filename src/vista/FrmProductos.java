@@ -327,7 +327,7 @@ public class FrmProductos extends javax.swing.JFrame {
         setBackground(new java.awt.Color(255, 255, 255));
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.setBackground(new java.awt.Color(153, 0, 0));
+        jPanel1.setBackground(new java.awt.Color(0, 0, 153));
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jPanel1.setPreferredSize(new java.awt.Dimension(900, 60));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -363,15 +363,15 @@ public class FrmProductos extends javax.swing.JFrame {
         jLabel4.setText("Proveedor");
         jPanel2.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 150, -1, -1));
 
-        cbProveedor.setBackground(new java.awt.Color(153, 0, 0));
-        cbProveedor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cbProveedor.setBackground(new java.awt.Color(0, 0, 153));
+        cbProveedor.setModel(new javax.swing.DefaultComboBoxModel<>());
         jPanel2.add(cbProveedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 180, 300, 30));
 
         jLabel5.setText("Impuesto");
         jPanel2.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, -1, -1));
 
-        jComboBox1.setBackground(new java.awt.Color(153, 0, 0));
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jComboBox1.setBackground(new java.awt.Color(0, 0, 153));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>());
         jPanel2.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 240, 300, 30));
 
         jLabel6.setText("Costo *");
@@ -471,10 +471,10 @@ public class FrmProductos extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnNuevaCategoria;
     private javax.swing.JButton btnNuevoProveedor;
-    private javax.swing.JComboBox<Object> cbProveedor;
+    private javax.swing.JComboBox<ComboItem> cbProveedor;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JComboBox<Object> jComboBox1;
+    private javax.swing.JComboBox<ComboItem> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

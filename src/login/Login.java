@@ -181,8 +181,9 @@ public class Login extends javax.swing.JFrame {
 
         panelPrincipal.add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 180, 400, 380));
 
-        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/login/login.jpg"))); // NOI18N
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/login/login.png"))); // NOI18N
         jLabel5.setText("jLabel5");
+        jLabel5.setPreferredSize(new java.awt.Dimension(900, 780));
         panelPrincipal.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 780));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

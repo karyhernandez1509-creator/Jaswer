@@ -52,7 +52,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        panelHeader.setBackground(new java.awt.Color(170, 0, 0));
+        panelHeader.setBackground(new java.awt.Color(0, 0, 153));
         panelHeader.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         panelHeader.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
