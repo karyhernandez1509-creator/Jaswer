@@ -319,7 +319,6 @@ public class FrmProductos extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         txtCodigo = new javax.swing.JTextField();
@@ -357,16 +356,6 @@ public class FrmProductos extends javax.swing.JFrame {
         jLabel1.setText("EL JASWER DEL SOFWER");
         jLabel1.setPreferredSize(new java.awt.Dimension(20, 15));
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 15, 480, 30));
-
-        jButton1.setBackground(new java.awt.Color(0, 153, 204));
-        jButton1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jButton1.setText("Regresar");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 20, 100, 30));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 60));
 
@@ -427,7 +416,7 @@ public class FrmProductos extends javax.swing.JFrame {
         panelSeccion.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel7.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        jLabel7.setForeground(new java.awt.Color(80, 80, 80));
+        jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText("Seleccione una Categoria");
         panelSeccion.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 20, 250, 20));
 
@@ -463,10 +452,6 @@ public class FrmProductos extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtCodigoActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        regresarAListaProductos();
-    }//GEN-LAST:event_jButton1ActionPerformed
-
     private void regresarAListaProductos() {
         java.awt.EventQueue.invokeLater(() -> new FrmListaProductos().setVisible(true));
         dispose();
@@ -500,7 +485,6 @@ public class FrmProductos extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnNuevoProveedor;
     private javax.swing.JComboBox<ComboItem> cbProveedor;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JComboBox<ComboItem> jComboBox1;
