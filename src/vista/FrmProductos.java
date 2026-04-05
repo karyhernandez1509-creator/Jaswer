@@ -39,7 +39,7 @@ public class FrmProductos extends javax.swing.JFrame {
     }
 
     private void configurarEventos() {
-        jButton1.addActionListener(e -> guardarProducto());
+        jButton3.addActionListener(e -> guardarProducto());
         jButton2.addActionListener(e -> limpiarFormulario());
     }
 
@@ -451,8 +451,13 @@ public class FrmProductos extends javax.swing.JFrame {
     }//GEN-LAST:event_txtCodigoActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        regresarAListaProductos();
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void regresarAListaProductos() {
+        java.awt.EventQueue.invokeLater(() -> new FrmListaProductos().setVisible(true));
+        dispose();
+    }
 
     /**
      * @param args the command line arguments
