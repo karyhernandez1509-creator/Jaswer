@@ -39,7 +39,7 @@ public class FrmProductos extends javax.swing.JFrame {
     }
 
     private void configurarEventos() {
-        jButton1.addActionListener(e -> guardarProducto());
+        jButton3.addActionListener(e -> guardarProducto());
         jButton2.addActionListener(e -> limpiarFormulario());
     }
 
@@ -128,31 +128,11 @@ public class FrmProductos extends javax.swing.JFrame {
         String stockMinimoTexto = txtStock.getText().trim();
         String precioTexto = txtPrecio.getText().trim();
 
-        if (codigo.isEmpty() || nombre.isEmpty() || costoTexto.isEmpty() || stockMinimoTexto.isEmpty() || precioTexto.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Complete todos los campos obligatorios.");
-            return;
-        }
-
         ComboItem proveedor = (ComboItem) cbProveedor.getSelectedItem();
         ComboItem impuesto = (ComboItem) jComboBox1.getSelectedItem();
-
-        if (proveedor == null || impuesto == null) {
-            JOptionPane.showMessageDialog(this, "Debe seleccionar proveedor e impuesto.");
-            return;
-        }
-
-        double costo;
-        int stockMinimo;
-        double precio;
-
-        try {
-            costo = Double.parseDouble(costoTexto);
-            stockMinimo = Integer.parseInt(stockMinimoTexto);
-            precio = Double.parseDouble(precioTexto);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Costo, Stock Minimo y Precio deben ser numericos.");
-            return;
-        }
+        double costo = parseDoubleOrZero(costoTexto);
+        int stockMinimo = parseIntOrZero(stockMinimoTexto);
+        double precio = parseDoubleOrZero(precioTexto);
 
         String seccion = (String) jComboBox2.getSelectedItem();
         int cocina = "Cocina".equalsIgnoreCase(seccion) ? 1 : 0;
@@ -185,16 +165,6 @@ public class FrmProductos extends javax.swing.JFrame {
                 return;
             }
 
-            if (colProveedor == null) {
-                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de proveedor compatible.");
-                return;
-            }
-
-            if (colImpuesto == null) {
-                JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de impuesto compatible.");
-                return;
-            }
-
             if (colStock == null && colStockMinimo == null) {
                 JOptionPane.showMessageDialog(this, "La tabla productos no tiene columna de stock compatible.");
                 return;
@@ -203,10 +173,16 @@ public class FrmProductos extends javax.swing.JFrame {
             Map<String, Object> valores = new LinkedHashMap<>();
             valores.put(colCodigo, codigo);
             valores.put(colNombre, nombre);
-            valores.put(colProveedor, proveedor.id);
-            valores.put(colImpuesto, impuesto.id);
             valores.put(colCosto, costo);
             valores.put(colPrecio, precio);
+
+            if (colProveedor != null && proveedor != null) {
+                valores.put(colProveedor, proveedor.id);
+            }
+
+            if (colImpuesto != null && impuesto != null) {
+                valores.put(colImpuesto, impuesto.id);
+            }
 
             if (colStock != null) {
                 valores.put(colStock, stockMinimo);
@@ -247,6 +223,28 @@ public class FrmProductos extends javax.swing.JFrame {
                 "Error",
                 JOptionPane.ERROR_MESSAGE
             );
+        }
+    }
+
+    private double parseDoubleOrZero(String valor) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(valor.trim());
+        } catch (NumberFormatException ex) {
+            return 0.0;
+        }
+    }
+
+    private int parseIntOrZero(String valor) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(valor.trim());
+        } catch (NumberFormatException ex) {
+            return 0;
         }
     }
 
@@ -321,6 +319,7 @@ public class FrmProductos extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         txtCodigo = new javax.swing.JTextField();
@@ -340,9 +339,9 @@ public class FrmProductos extends javax.swing.JFrame {
         btnNuevaCategoria = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         jComboBox2 = new javax.swing.JComboBox<>();
-        jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         btnNuevoProveedor = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Productos");
@@ -359,6 +358,16 @@ public class FrmProductos extends javax.swing.JFrame {
         jLabel1.setText("EL JASWER DEL SOFWER");
         jLabel1.setPreferredSize(new java.awt.Dimension(20, 15));
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 15, 480, 30));
+
+        jButton1.setBackground(new java.awt.Color(0, 153, 204));
+        jButton1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jButton1.setText("Regresar");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 20, 100, 30));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 60));
 
@@ -386,14 +395,12 @@ public class FrmProductos extends javax.swing.JFrame {
         jPanel2.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 150, -1, -1));
 
         cbProveedor.setBackground(new java.awt.Color(0, 0, 153));
-        cbProveedor.setModel(new javax.swing.DefaultComboBoxModel<>());
         jPanel2.add(cbProveedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 180, 300, 30));
 
         jLabel5.setText("Impuesto");
         jPanel2.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, -1, -1));
 
         jComboBox1.setBackground(new java.awt.Color(0, 0, 153));
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>());
         jPanel2.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 240, 300, 30));
 
         jLabel6.setText("Costo *");
@@ -438,10 +445,6 @@ public class FrmProductos extends javax.swing.JFrame {
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         jPanel2.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 550, 250, 30));
 
-        jButton1.setBackground(new java.awt.Color(51, 153, 0));
-        jButton1.setText("Guardar");
-        jPanel2.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 30, -1, -1));
-
         jButton2.setBackground(new java.awt.Color(204, 0, 0));
         jButton2.setText("Cancelar");
         jPanel2.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 30, -1, -1));
@@ -451,6 +454,10 @@ public class FrmProductos extends javax.swing.JFrame {
         btnNuevoProveedor.setForeground(new java.awt.Color(255, 255, 255));
         btnNuevoProveedor.setText("+");
         jPanel2.add(btnNuevoProveedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 140, 45, 30));
+
+        jButton3.setBackground(new java.awt.Color(51, 153, 0));
+        jButton3.setText("Guardar");
+        jPanel2.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 30, -1, -1));
 
         getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 60, 900, 720));
 
@@ -464,6 +471,15 @@ public class FrmProductos extends javax.swing.JFrame {
     private void txtCodigoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCodigoActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtCodigoActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        regresarAListaProductos();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void regresarAListaProductos() {
+        java.awt.EventQueue.invokeLater(() -> new FrmListaProductos().setVisible(true));
+        dispose();
+    }
 
     /**
      * @param args the command line arguments
@@ -496,6 +512,7 @@ public class FrmProductos extends javax.swing.JFrame {
     private javax.swing.JComboBox<ComboItem> cbProveedor;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JComboBox<ComboItem> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;

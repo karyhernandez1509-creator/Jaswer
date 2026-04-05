@@ -3,7 +3,20 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package vista;
+
+import conexion.Conexion;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 import vista.ButtonRenderer;
 /**
  *
@@ -18,8 +31,424 @@ public class FrmListaProductos extends javax.swing.JFrame {
      */
     public FrmListaProductos() {
         initComponents();
+        setLocationRelativeTo(null);
+        configurarTabla();
+        configurarEventos();
+        inicializarFiltros();
+        cargarProveedores();
+        cargarProductos();
+    }
+
+    private void configurarTabla() {
+        DefaultTableModel modelo = new DefaultTableModel(
+            new Object[]{"ID", "Nombre", "Seccion", "Stock", "Accion"},
+            0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 4;
+            }
+        };
+        tblProductos.setModel(modelo);
         tblProductos.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
-        tblProductos.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox()));
+        tblProductos.getColumnModel().getColumn(4).setCellEditor(
+            new ButtonEditor(new JCheckBox(), this::manejarAccionFila)
+        );
+    }
+
+    private void configurarEventos() {
+        btnBuscar.addActionListener(e -> cargarProductos());
+        btnLimpiar.addActionListener(e -> limpiarFiltros());
+        btnCrearNuevo.addActionListener(e -> {
+            FrmProductos frmProductos = new FrmProductos();
+            frmProductos.setVisible(true);
+            dispose();
+        });
+    }
+
+    private void inicializarFiltros() {
+        cmbSeccion.removeAllItems();
+        cmbSeccion.addItem("Todos");
+        cmbSeccion.addItem("Cocina");
+        cmbSeccion.addItem("Barra");
+        cmbSeccion.addItem("Otros");
+
+        cmbProveedor.removeAllItems();
+        cmbProveedor.addItem("Todos");
+    }
+
+    private void cargarProveedores() {
+        final String sql = "SELECT nombre FROM proveedores WHERE activo = 1 ORDER BY nombre";
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                return;
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    cmbProveedor.addItem(rs.getString("nombre"));
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron cargar los proveedores: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void cargarProductos() {
+        DefaultTableModel modelo = (DefaultTableModel) tblProductos.getModel();
+        modelo.setRowCount(0);
+
+        String nombreFiltro = txtNombre.getText().trim();
+        String codigoFiltro = jTextField1.getText().trim();
+        String seccionFiltro = (String) cmbSeccion.getSelectedItem();
+        String proveedorFiltro = (String) cmbProveedor.getSelectedItem();
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo conectar a la base de datos.",
+                    "Error de conexion",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
+            String colCodigo = buscarColumna(columnas, "codigo", "codigo_producto", "cod_producto");
+            String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
+            String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
+            String colActivo = buscarColumna(columnas, "activo", "estado");
+            boolean tieneCocina = columnas.contains("cocina");
+            boolean tieneBarra = columnas.contains("barra");
+            boolean tieneOtros = columnas.contains("otros");
+
+            if (colId == null || colNombre == null || colStock == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla productos no tiene columnas compatibles para listado (id, nombre, stock).",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT p.")
+                .append(colId).append(" AS id, p.")
+                .append(colNombre).append(" AS nombre, p.")
+                .append(colStock).append(" AS stock, ");
+
+            if (tieneCocina || tieneBarra || tieneOtros) {
+                sql.append("CASE ");
+                if (tieneCocina) {
+                    sql.append("WHEN p.cocina = 1 THEN 'Cocina' ");
+                }
+                if (tieneBarra) {
+                    sql.append("WHEN p.barra = 1 THEN 'Barra' ");
+                }
+                if (tieneOtros) {
+                    sql.append("WHEN p.otros = 1 THEN 'Otros' ");
+                }
+                sql.append("ELSE 'Sin seccion' END AS seccion ");
+            } else {
+                sql.append("'Sin seccion' AS seccion ");
+            }
+
+            sql.append("FROM productos p ");
+            if (colProveedor != null) {
+                sql.append("LEFT JOIN proveedores pr ON p.").append(colProveedor).append(" = pr.id ");
+            }
+
+            List<Object> parametros = new ArrayList<>();
+            List<String> condiciones = new ArrayList<>();
+
+            if (!nombreFiltro.isEmpty()) {
+                condiciones.add("p." + colNombre + " LIKE ?");
+                parametros.add("%" + nombreFiltro + "%");
+            }
+
+            if (!codigoFiltro.isEmpty() && colCodigo != null) {
+                condiciones.add("p." + colCodigo + " LIKE ?");
+                parametros.add("%" + codigoFiltro + "%");
+            }
+
+            if (seccionFiltro != null && !"Todos".equalsIgnoreCase(seccionFiltro)) {
+                if ("Cocina".equalsIgnoreCase(seccionFiltro) && tieneCocina) {
+                    condiciones.add("p.cocina = 1");
+                } else if ("Barra".equalsIgnoreCase(seccionFiltro) && tieneBarra) {
+                    condiciones.add("p.barra = 1");
+                } else if ("Otros".equalsIgnoreCase(seccionFiltro) && tieneOtros) {
+                    condiciones.add("p.otros = 1");
+                }
+            }
+
+            if (proveedorFiltro != null && !"Todos".equalsIgnoreCase(proveedorFiltro) && colProveedor != null) {
+                condiciones.add("pr.nombre = ?");
+                parametros.add(proveedorFiltro);
+            }
+
+            if (colActivo != null) {
+                condiciones.add("p." + colActivo + " = 1");
+            }
+
+            if (!condiciones.isEmpty()) {
+                sql.append("WHERE ").append(String.join(" AND ", condiciones)).append(" ");
+            }
+
+            sql.append("ORDER BY p.").append(colNombre);
+
+            try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
+                int index = 1;
+                for (Object parametro : parametros) {
+                    ps.setObject(index++, parametro);
+                }
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        modelo.addRow(new Object[]{
+                            rs.getObject("id"),
+                            rs.getString("nombre"),
+                            rs.getString("seccion"),
+                            rs.getObject("stock"),
+                            "Editar / Eliminar"
+                        });
+                    }
+                }
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron cargar los productos: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private Set<String> obtenerColumnasTabla(Connection con, String tabla) throws SQLException {
+        Set<String> columnas = new HashSet<>();
+        DatabaseMetaData metaData = con.getMetaData();
+        try (ResultSet rs = metaData.getColumns(con.getCatalog(), null, tabla, null)) {
+            while (rs.next()) {
+                columnas.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        return columnas;
+    }
+
+    private String buscarColumna(Set<String> columnas, String... candidatas) {
+        for (String candidata : candidatas) {
+            if (columnas.contains(candidata.toLowerCase())) {
+                return candidata;
+            }
+        }
+        return null;
+    }
+
+    private void manejarAccionFila(int row) {
+        if (row < 0 || row >= tblProductos.getRowCount()) {
+            return;
+        }
+
+        Object idObj = tblProductos.getValueAt(row, 0);
+        Object nombreObj = tblProductos.getValueAt(row, 1);
+        Object stockObj = tblProductos.getValueAt(row, 3);
+
+        if (idObj == null) {
+            JOptionPane.showMessageDialog(this, "No se encontro el ID del producto.");
+            return;
+        }
+
+        int idProducto;
+        int stockActual = 0;
+        try {
+            idProducto = Integer.parseInt(String.valueOf(idObj));
+            if (stockObj != null) {
+                stockActual = Integer.parseInt(String.valueOf(stockObj));
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "ID o stock invalido en la fila seleccionada.");
+            return;
+        }
+
+        String nombreActual = nombreObj == null ? "" : String.valueOf(nombreObj);
+
+        Object[] opciones = {"Editar", "Eliminar", "Cancelar"};
+        int accion = JOptionPane.showOptionDialog(
+            this,
+            "Seleccione una accion para el producto: " + nombreActual,
+            "Accion de producto",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            opciones,
+            opciones[0]
+        );
+
+        if (accion == 0) {
+            editarProducto(idProducto, nombreActual, stockActual);
+        } else if (accion == 1) {
+            eliminarProducto(idProducto, nombreActual);
+        }
+    }
+
+    private void editarProducto(int idProducto, String nombreActual, int stockActual) {
+        String nuevoNombre = JOptionPane.showInputDialog(
+            this,
+            "Nuevo nombre:",
+            nombreActual
+        );
+
+        if (nuevoNombre == null) {
+            return;
+        }
+        nuevoNombre = nuevoNombre.trim();
+        if (nuevoNombre.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El nombre no puede quedar vacio.");
+            return;
+        }
+
+        String nuevoStockTexto = JOptionPane.showInputDialog(
+            this,
+            "Nuevo stock:",
+            stockActual
+        );
+        if (nuevoStockTexto == null) {
+            return;
+        }
+
+        int nuevoStock;
+        try {
+            nuevoStock = Integer.parseInt(nuevoStockTexto.trim());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "El stock debe ser numerico.");
+            return;
+        }
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
+            String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
+
+            if (colId == null || colNombre == null || colStock == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla productos no tiene columnas compatibles para editar (id, nombre, stock).",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            String sql = "UPDATE productos SET " + colNombre + " = ?, " + colStock + " = ? WHERE " + colId + " = ?";
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, nuevoNombre);
+                ps.setInt(2, nuevoStock);
+                ps.setInt(3, idProducto);
+
+                int filas = ps.executeUpdate();
+                if (filas > 0) {
+                    JOptionPane.showMessageDialog(this, "Producto actualizado correctamente.");
+                    cargarProductos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se actualizo ningun producto.");
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo editar el producto: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void eliminarProducto(int idProducto, String nombreProducto) {
+        int confirmar = JOptionPane.showConfirmDialog(
+            this,
+            "Desea eliminar el producto \"" + nombreProducto + "\"?",
+            "Confirmar eliminacion",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirmar != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            String colActivo = buscarColumna(columnas, "activo", "estado");
+
+            if (colId == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla productos no tiene columna ID compatible.",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            String sql;
+            if (colActivo != null) {
+                sql = "UPDATE productos SET " + colActivo + " = 0 WHERE " + colId + " = ?";
+            } else {
+                sql = "DELETE FROM productos WHERE " + colId + " = ?";
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, idProducto);
+                int filas = ps.executeUpdate();
+                if (filas > 0) {
+                    JOptionPane.showMessageDialog(this, "Producto eliminado correctamente.");
+                    cargarProductos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se elimino ningun producto.");
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo eliminar el producto: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void limpiarFiltros() {
+        txtNombre.setText("");
+        jTextField1.setText("");
+        if (cmbSeccion.getItemCount() > 0) {
+            cmbSeccion.setSelectedIndex(0);
+        }
+        if (cmbProveedor.getItemCount() > 0) {
+            cmbProveedor.setSelectedIndex(0);
+        }
+        cargarProductos();
     }
 
     /**
