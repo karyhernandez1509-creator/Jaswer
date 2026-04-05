@@ -52,12 +52,23 @@ public class FrmProductos extends javax.swing.JFrame {
         cbProveedor.removeAllItems();
         final String sql = "SELECT id, nombre FROM proveedores WHERE activo = 1 ORDER BY nombre";
 
-        try (Connection con = Conexion.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo conectar a la base de datos para cargar proveedores.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                cbProveedor.addItem(new ComboItem(rs.getInt("id"), rs.getString("nombre")));
+                while (rs.next()) {
+                    cbProveedor.addItem(new ComboItem(rs.getInt("id"), rs.getString("nombre")));
+                }
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(
@@ -73,13 +84,24 @@ public class FrmProductos extends javax.swing.JFrame {
         jComboBox1.removeAllItems();
         final String sql = "SELECT id, nombre, porcentaje FROM impuestos WHERE activo = 1 ORDER BY id";
 
-        try (Connection con = Conexion.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo conectar a la base de datos para cargar impuestos.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                String etiqueta = rs.getString("nombre") + " (" + rs.getBigDecimal("porcentaje") + "%)";
-                jComboBox1.addItem(new ComboItem(rs.getInt("id"), etiqueta));
+                while (rs.next()) {
+                    String etiqueta = rs.getString("nombre") + " (" + rs.getBigDecimal("porcentaje") + "%)";
+                    jComboBox1.addItem(new ComboItem(rs.getInt("id"), etiqueta));
+                }
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(
