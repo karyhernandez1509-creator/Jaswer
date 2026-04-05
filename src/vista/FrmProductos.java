@@ -336,7 +336,6 @@ public class FrmProductos extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         txtPrecio = new javax.swing.JTextField();
         panelSeccion = new javax.swing.JPanel();
-        btnNuevaCategoria = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         jComboBox2 = new javax.swing.JComboBox<>();
         jButton2 = new javax.swing.JButton();
@@ -424,21 +423,13 @@ public class FrmProductos extends javax.swing.JFrame {
         jPanel2.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 400, -1, -1));
         jPanel2.add(txtPrecio, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 420, 140, 30));
 
-        panelSeccion.setBackground(new java.awt.Color(240, 240, 240));
+        panelSeccion.setBackground(new java.awt.Color(0, 102, 153));
         panelSeccion.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        btnNuevaCategoria.setBackground(new java.awt.Color(0, 153, 0));
-        btnNuevaCategoria.setFont(new java.awt.Font("Arial", 1, 20)); // NOI18N
-        btnNuevaCategoria.setForeground(new java.awt.Color(255, 255, 255));
-        btnNuevaCategoria.setText("+");
-        btnNuevaCategoria.setPreferredSize(new java.awt.Dimension(50, 50));
-        btnNuevaCategoria.setVerifyInputWhenFocusTarget(false);
-        panelSeccion.add(btnNuevaCategoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 40, 40));
 
         jLabel7.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(80, 80, 80));
         jLabel7.setText("Seleccione una Categoria");
-        panelSeccion.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 20, 250, 20));
+        panelSeccion.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 20, 250, 20));
 
         jPanel2.add(panelSeccion, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 470, 280, 60));
 
@@ -507,7 +498,6 @@ public class FrmProductos extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnNuevaCategoria;
     private javax.swing.JButton btnNuevoProveedor;
     private javax.swing.JComboBox<ComboItem> cbProveedor;
     private javax.swing.JButton jButton1;
