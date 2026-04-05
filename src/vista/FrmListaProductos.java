@@ -51,7 +51,9 @@ public class FrmListaProductos extends javax.swing.JFrame {
         };
         tblProductos.setModel(modelo);
         tblProductos.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
-        tblProductos.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox()));
+        tblProductos.getColumnModel().getColumn(4).setCellEditor(
+            new ButtonEditor(new JCheckBox(), this::manejarAccionFila)
+        );
     }
 
     private void configurarEventos() {
@@ -124,6 +126,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
             String colCodigo = buscarColumna(columnas, "codigo", "codigo_producto", "cod_producto");
             String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
             String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
+            String colActivo = buscarColumna(columnas, "activo", "estado");
             boolean tieneCocina = columnas.contains("cocina");
             boolean tieneBarra = columnas.contains("barra");
             boolean tieneOtros = columnas.contains("otros");
@@ -193,6 +196,10 @@ public class FrmListaProductos extends javax.swing.JFrame {
                 parametros.add(proveedorFiltro);
             }
 
+            if (colActivo != null) {
+                condiciones.add("p." + colActivo + " = 1");
+            }
+
             if (!condiciones.isEmpty()) {
                 sql.append("WHERE ").append(String.join(" AND ", condiciones)).append(" ");
             }
@@ -246,6 +253,190 @@ public class FrmListaProductos extends javax.swing.JFrame {
             }
         }
         return null;
+    }
+
+    private void manejarAccionFila(int row) {
+        if (row < 0 || row >= tblProductos.getRowCount()) {
+            return;
+        }
+
+        Object idObj = tblProductos.getValueAt(row, 0);
+        Object nombreObj = tblProductos.getValueAt(row, 1);
+        Object stockObj = tblProductos.getValueAt(row, 3);
+
+        if (idObj == null) {
+            JOptionPane.showMessageDialog(this, "No se encontro el ID del producto.");
+            return;
+        }
+
+        int idProducto;
+        int stockActual = 0;
+        try {
+            idProducto = Integer.parseInt(String.valueOf(idObj));
+            if (stockObj != null) {
+                stockActual = Integer.parseInt(String.valueOf(stockObj));
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "ID o stock invalido en la fila seleccionada.");
+            return;
+        }
+
+        String nombreActual = nombreObj == null ? "" : String.valueOf(nombreObj);
+
+        Object[] opciones = {"Editar", "Eliminar", "Cancelar"};
+        int accion = JOptionPane.showOptionDialog(
+            this,
+            "Seleccione una accion para el producto: " + nombreActual,
+            "Accion de producto",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            opciones,
+            opciones[0]
+        );
+
+        if (accion == 0) {
+            editarProducto(idProducto, nombreActual, stockActual);
+        } else if (accion == 1) {
+            eliminarProducto(idProducto, nombreActual);
+        }
+    }
+
+    private void editarProducto(int idProducto, String nombreActual, int stockActual) {
+        String nuevoNombre = JOptionPane.showInputDialog(
+            this,
+            "Nuevo nombre:",
+            nombreActual
+        );
+
+        if (nuevoNombre == null) {
+            return;
+        }
+        nuevoNombre = nuevoNombre.trim();
+        if (nuevoNombre.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El nombre no puede quedar vacio.");
+            return;
+        }
+
+        String nuevoStockTexto = JOptionPane.showInputDialog(
+            this,
+            "Nuevo stock:",
+            stockActual
+        );
+        if (nuevoStockTexto == null) {
+            return;
+        }
+
+        int nuevoStock;
+        try {
+            nuevoStock = Integer.parseInt(nuevoStockTexto.trim());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "El stock debe ser numerico.");
+            return;
+        }
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
+            String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
+
+            if (colId == null || colNombre == null || colStock == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla productos no tiene columnas compatibles para editar (id, nombre, stock).",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            String sql = "UPDATE productos SET " + colNombre + " = ?, " + colStock + " = ? WHERE " + colId + " = ?";
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, nuevoNombre);
+                ps.setInt(2, nuevoStock);
+                ps.setInt(3, idProducto);
+
+                int filas = ps.executeUpdate();
+                if (filas > 0) {
+                    JOptionPane.showMessageDialog(this, "Producto actualizado correctamente.");
+                    cargarProductos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se actualizo ningun producto.");
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo editar el producto: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void eliminarProducto(int idProducto, String nombreProducto) {
+        int confirmar = JOptionPane.showConfirmDialog(
+            this,
+            "Desea eliminar el producto \"" + nombreProducto + "\"?",
+            "Confirmar eliminacion",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirmar != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            String colActivo = buscarColumna(columnas, "activo", "estado");
+
+            if (colId == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla productos no tiene columna ID compatible.",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            String sql;
+            if (colActivo != null) {
+                sql = "UPDATE productos SET " + colActivo + " = 0 WHERE " + colId + " = ?";
+            } else {
+                sql = "DELETE FROM productos WHERE " + colId + " = ?";
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, idProducto);
+                int filas = ps.executeUpdate();
+                if (filas > 0) {
+                    JOptionPane.showMessageDialog(this, "Producto eliminado correctamente.");
+                    cargarProductos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se elimino ningun producto.");
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo eliminar el producto: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
 
     private void limpiarFiltros() {
