@@ -435,7 +435,7 @@ public class FrmProductos extends javax.swing.JFrame {
         btnNuevoProveedor.setText("+");
         jPanel2.add(btnNuevoProveedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 140, 45, 30));
 
-        jButton3.setBackground(new java.awt.Color(51, 153, 0));
+        jButton3.setBackground(new java.awt.Color(0, 153, 0));
         jButton3.setText("Guardar");
         jPanel2.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 30, -1, -1));
 
