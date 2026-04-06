@@ -57,9 +57,9 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
 
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/vista/icono.jpeg"))); // NOI18N
         jLabel2.setText("jLabel2");
-        jPanel2.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 240, 690));
+        jPanel2.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -60, 380, 690));
 
-        getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 70, 260, 710));
+        getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 100, 340, 680));
 
         jPanel3.setBackground(new java.awt.Color(250, 250, 250));
         jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -84,7 +84,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jButton5.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 40, 120, 100));
 
-        getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 70, 640, 710));
+        getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 70, 580, 710));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
