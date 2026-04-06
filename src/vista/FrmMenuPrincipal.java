@@ -64,7 +64,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jPanel3.setBackground(new java.awt.Color(250, 250, 250));
         jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jButton1.setText("Crear y Modificar");
+        jButton1.setText("Reportes");
         jButton1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 160, 120, 100));
 
@@ -72,15 +72,15 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jButton2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 40, 120, 100));
 
-        jButton3.setText("Crear y Modificar");
+        jButton3.setText("Compras");
         jButton3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 40, 120, 100));
 
-        jButton4.setText("Crear y Modificar");
+        jButton4.setText("Ventas");
         jButton4.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 40, 120, 100));
 
-        jButton5.setText("Crear y Modificar");
+        jButton5.setText("Inventario");
         jButton5.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 40, 120, 100));
 
