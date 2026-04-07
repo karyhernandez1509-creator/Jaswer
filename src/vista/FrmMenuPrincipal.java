@@ -4,6 +4,8 @@
  */
 package vista;
 
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author herna
@@ -17,6 +19,30 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
      */
     public FrmMenuPrincipal() {
         initComponents();
+        setLocationRelativeTo(null);
+        configurarEventos();
+    }
+
+    private void configurarEventos() {
+        jButton2.addActionListener(e -> abrirListaProductos());
+        jButton1.addActionListener(e -> mostrarFuncionalidadFutura());
+        jButton3.addActionListener(e -> mostrarFuncionalidadFutura());
+        jButton4.addActionListener(e -> mostrarFuncionalidadFutura());
+        jButton5.addActionListener(e -> mostrarFuncionalidadFutura());
+    }
+
+    private void abrirListaProductos() {
+        new FrmListaProductos().setVisible(true);
+        dispose();
+    }
+
+    private void mostrarFuncionalidadFutura() {
+        JOptionPane.showMessageDialog(
+            this,
+            "Esta funcionalidad estara disponible proximamente.",
+            "Funcionalidad futura",
+            JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
     /**

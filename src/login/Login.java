@@ -13,7 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
-import vista.FrmProductos;
+import vista.FrmMenuPrincipal;
 
 /**
  *
@@ -68,7 +68,7 @@ public class Login extends javax.swing.JFrame {
         }
 
         if (autenticarUsuario(usuario, contrasena)) {
-            new FrmProductos().setVisible(true);
+            new FrmMenuPrincipal().setVisible(true);
             dispose();
             return;
         }
