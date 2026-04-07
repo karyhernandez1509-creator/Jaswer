@@ -69,9 +69,10 @@ public class FrmListaProductos extends javax.swing.JFrame {
     private void inicializarFiltros() {
         cmbSeccion.removeAllItems();
         cmbSeccion.addItem("Todos");
-        cmbSeccion.addItem("Cocina");
-        cmbSeccion.addItem("Barra");
-        cmbSeccion.addItem("Otros");
+        cmbSeccion.addItem("Hardware");
+        cmbSeccion.addItem("Perifericos");
+        cmbSeccion.addItem("Laptop");
+        cmbSeccion.addItem("Accesorios");
 
         cmbProveedor.removeAllItems();
         cmbProveedor.addItem("Todos");
@@ -127,6 +128,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
             String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
             String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
             String colActivo = buscarColumna(columnas, "activo", "estado");
+            String colTipo = buscarColumna(columnas, "tipo", "categoria", "seccion");
             boolean tieneCocina = columnas.contains("cocina");
             boolean tieneBarra = columnas.contains("barra");
             boolean tieneOtros = columnas.contains("otros");
@@ -147,16 +149,18 @@ public class FrmListaProductos extends javax.swing.JFrame {
                 .append(colNombre).append(" AS nombre, p.")
                 .append(colStock).append(" AS stock, ");
 
-            if (tieneCocina || tieneBarra || tieneOtros) {
+            if (colTipo != null) {
+                sql.append("COALESCE(p.").append(colTipo).append(", 'Sin seccion') AS seccion ");
+            } else if (tieneCocina || tieneBarra || tieneOtros) {
                 sql.append("CASE ");
                 if (tieneCocina) {
-                    sql.append("WHEN p.cocina = 1 THEN 'Cocina' ");
+                    sql.append("WHEN p.cocina = 1 THEN 'Hardware' ");
                 }
                 if (tieneBarra) {
-                    sql.append("WHEN p.barra = 1 THEN 'Barra' ");
+                    sql.append("WHEN p.barra = 1 THEN 'Perifericos' ");
                 }
                 if (tieneOtros) {
-                    sql.append("WHEN p.otros = 1 THEN 'Otros' ");
+                    sql.append("WHEN p.otros = 1 THEN 'Laptop' ");
                 }
                 sql.append("ELSE 'Sin seccion' END AS seccion ");
             } else {
@@ -182,11 +186,14 @@ public class FrmListaProductos extends javax.swing.JFrame {
             }
 
             if (seccionFiltro != null && !"Todos".equalsIgnoreCase(seccionFiltro)) {
-                if ("Cocina".equalsIgnoreCase(seccionFiltro) && tieneCocina) {
+                if (colTipo != null) {
+                    condiciones.add("p." + colTipo + " = ?");
+                    parametros.add(seccionFiltro);
+                } else if ("Hardware".equalsIgnoreCase(seccionFiltro) && tieneCocina) {
                     condiciones.add("p.cocina = 1");
-                } else if ("Barra".equalsIgnoreCase(seccionFiltro) && tieneBarra) {
+                } else if ("Perifericos".equalsIgnoreCase(seccionFiltro) && tieneBarra) {
                     condiciones.add("p.barra = 1");
-                } else if ("Otros".equalsIgnoreCase(seccionFiltro) && tieneOtros) {
+                } else if (("Laptop".equalsIgnoreCase(seccionFiltro) || "Accesorios".equalsIgnoreCase(seccionFiltro)) && tieneOtros) {
                     condiciones.add("p.otros = 1");
                 }
             }
@@ -303,81 +310,9 @@ public class FrmListaProductos extends javax.swing.JFrame {
     }
 
     private void editarProducto(int idProducto, String nombreActual, int stockActual) {
-        String nuevoNombre = JOptionPane.showInputDialog(
-            this,
-            "Nuevo nombre:",
-            nombreActual
-        );
-
-        if (nuevoNombre == null) {
-            return;
-        }
-        nuevoNombre = nuevoNombre.trim();
-        if (nuevoNombre.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El nombre no puede quedar vacio.");
-            return;
-        }
-
-        String nuevoStockTexto = JOptionPane.showInputDialog(
-            this,
-            "Nuevo stock:",
-            stockActual
-        );
-        if (nuevoStockTexto == null) {
-            return;
-        }
-
-        int nuevoStock;
-        try {
-            nuevoStock = Integer.parseInt(nuevoStockTexto.trim());
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "El stock debe ser numerico.");
-            return;
-        }
-
-        try (Connection con = Conexion.conectar()) {
-            if (con == null) {
-                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
-                return;
-            }
-
-            Set<String> columnas = obtenerColumnasTabla(con, "productos");
-            String colId = buscarColumna(columnas, "id", "id_producto");
-            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
-            String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
-
-            if (colId == null || colNombre == null || colStock == null) {
-                JOptionPane.showMessageDialog(
-                    this,
-                    "La tabla productos no tiene columnas compatibles para editar (id, nombre, stock).",
-                    "Error de esquema",
-                    JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            String sql = "UPDATE productos SET " + colNombre + " = ?, " + colStock + " = ? WHERE " + colId + " = ?";
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, nuevoNombre);
-                ps.setInt(2, nuevoStock);
-                ps.setInt(3, idProducto);
-
-                int filas = ps.executeUpdate();
-                if (filas > 0) {
-                    JOptionPane.showMessageDialog(this, "Producto actualizado correctamente.");
-                    cargarProductos();
-                } else {
-                    JOptionPane.showMessageDialog(this, "No se actualizo ningun producto.");
-                }
-            }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                this,
-                "No se pudo editar el producto: " + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
+        FrmProductos frmProductos = new FrmProductos(idProducto);
+        frmProductos.setVisible(true);
+        dispose();
     }
 
     private void eliminarProducto(int idProducto, String nombreProducto) {

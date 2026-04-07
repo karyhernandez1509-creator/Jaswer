@@ -49,7 +49,13 @@ public class FrmProductos extends javax.swing.JFrame {
 
     private void configurarEventos() {
         jButton3.addActionListener(e -> guardarProducto());
-        jButton2.addActionListener(e -> limpiarFormulario());
+        jButton2.addActionListener(e -> {
+            if (idProductoEdicion != null) {
+                regresarAListaProductos();
+            } else {
+                limpiarFormulario();
+            }
+        });
         btnNuevoProveedor.addActionListener(e -> abrirFrmProveedor());
     }
 
@@ -190,6 +196,7 @@ public class FrmProductos extends javax.swing.JFrame {
             String colPrecio = buscarColumna(columnas, "precio", "precio_venta", "pvp", "valor_venta");
             String colStock = buscarColumna(columnas, "stock", "existencia");
             String colStockMinimo = buscarColumna(columnas, "stock_minimo", "stockminimo", "stock_min");
+            String colTipo = buscarColumna(columnas, "tipo", "categoria", "seccion");
 
             if (colCodigo == null || colNombre == null || colCosto == null || colPrecio == null) {
                 JOptionPane.showMessageDialog(
@@ -228,6 +235,10 @@ public class FrmProductos extends javax.swing.JFrame {
                 valores.put(colStockMinimo, stockMinimo);
             }
 
+            if (colTipo != null) {
+                valores.put(colTipo, seccion);
+            }
+
             if (columnas.contains("cocina")) {
                 valores.put("cocina", cocina);
             }
@@ -242,6 +253,23 @@ public class FrmProductos extends javax.swing.JFrame {
             }
 
             String sql;
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            if (idProductoEdicion != null && colId == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla productos no tiene una columna ID compatible para editar.",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            if (idProductoEdicion == null) {
+                sql = construirInsert("productos", valores);
+            } else {
+                sql = construirUpdate("productos", valores, colId);
+            }
+
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 int index = 1;
                 for (Object valor : valores.values()) {
@@ -251,22 +279,6 @@ public class FrmProductos extends javax.swing.JFrame {
                     ps.setObject(index, idProductoEdicion);
                 }
                 ps.executeUpdate();
-            }
-
-            if (idProductoEdicion == null) {
-                sql = construirInsert("productos", valores);
-            } else {
-                String colId = buscarColumna(columnas, "id", "id_producto");
-                if (colId == null) {
-                    JOptionPane.showMessageDialog(
-                        this,
-                        "La tabla productos no tiene una columna ID compatible para editar.",
-                        "Error de esquema",
-                        JOptionPane.ERROR_MESSAGE
-                    );
-                    return;
-                }
-                sql = construirUpdate("productos", valores, colId);
             }
 
             JOptionPane.showMessageDialog(
@@ -376,6 +388,7 @@ public class FrmProductos extends javax.swing.JFrame {
             String colPrecio = buscarColumna(columnas, "precio", "precio_venta", "pvp", "valor_venta");
             String colStock = buscarColumna(columnas, "stock", "existencia");
             String colStockMinimo = buscarColumna(columnas, "stock_minimo", "stockminimo", "stock_min");
+            String colTipo = buscarColumna(columnas, "tipo", "categoria", "seccion");
 
             if (colId == null) {
                 JOptionPane.showMessageDialog(this, "No se encontro una columna ID compatible para editar.");
@@ -407,6 +420,9 @@ public class FrmProductos extends javax.swing.JFrame {
             }
             if (colStockMinimo != null && !colStockMinimo.equalsIgnoreCase(colStock)) {
                 seleccion.add(colStockMinimo + " AS stock_minimo");
+            }
+            if (colTipo != null) {
+                seleccion.add(colTipo + " AS tipo");
             }
             if (columnas.contains("cocina")) {
                 seleccion.add("cocina");
@@ -448,7 +464,10 @@ public class FrmProductos extends javax.swing.JFrame {
                         jComboBox1.setSelectedIndex(0);
                     }
 
-                    if (columnas.contains("cocina") && rs.getInt("cocina") == 1) {
+                    String tipo = valorTexto(rs, "tipo");
+                    if (!tipo.isEmpty()) {
+                        jComboBox2.setSelectedItem(tipo);
+                    } else if (columnas.contains("cocina") && rs.getInt("cocina") == 1) {
                         jComboBox2.setSelectedItem("Hardware");
                     } else if (columnas.contains("barra") && rs.getInt("barra") == 1) {
                         jComboBox2.setSelectedItem("Perifericos");
@@ -459,6 +478,9 @@ public class FrmProductos extends javax.swing.JFrame {
                     }
                 }
             }
+
+            jButton3.setText("Actualizar");
+            setTitle("Editar Producto");
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(
                 this,
