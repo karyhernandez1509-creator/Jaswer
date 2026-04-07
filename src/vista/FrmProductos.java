@@ -118,9 +118,10 @@ public class FrmProductos extends javax.swing.JFrame {
 
     private void inicializarSecciones() {
         DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
-        modelo.addElement("Cocina");
-        modelo.addElement("Barra");
-        modelo.addElement("Otros");
+        modelo.addElement("Hardware");
+        modelo.addElement("Perifericos");
+        modelo.addElement("Laptop");
+        modelo.addElement("Accesorios");
         jComboBox2.setModel(modelo);
     }
 
@@ -149,9 +150,9 @@ public class FrmProductos extends javax.swing.JFrame {
         }
 
         String seccion = (String) jComboBox2.getSelectedItem();
-        int cocina = "Cocina".equalsIgnoreCase(seccion) ? 1 : 0;
-        int barra = "Barra".equalsIgnoreCase(seccion) ? 1 : 0;
-        int otros = "Otros".equalsIgnoreCase(seccion) ? 1 : 0;
+        int cocina = "Hardware".equalsIgnoreCase(seccion) ? 1 : 0;
+        int barra = "Perifericos".equalsIgnoreCase(seccion) ? 1 : 0;
+        int otros = "Laptop".equalsIgnoreCase(seccion) || "Accesorios".equalsIgnoreCase(seccion) ? 1 : 0;
 
         try (Connection con = Conexion.conectar()) {
             if (con == null) {
