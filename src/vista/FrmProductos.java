@@ -118,6 +118,7 @@ public class FrmProductos extends javax.swing.JFrame {
 
     private void inicializarSecciones() {
         DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
+        modelo.addElement("Seleccionar");
         modelo.addElement("Hardware");
         modelo.addElement("Perifericos");
         modelo.addElement("Laptop");
@@ -150,6 +151,17 @@ public class FrmProductos extends javax.swing.JFrame {
         }
 
         String seccion = (String) jComboBox2.getSelectedItem();
+        if (seccion == null || "Seleccionar".equalsIgnoreCase(seccion)) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Selecciona una categoria antes de guardar.",
+                "Validacion",
+                JOptionPane.WARNING_MESSAGE
+            );
+            jComboBox2.requestFocus();
+            return;
+        }
+
         int cocina = "Hardware".equalsIgnoreCase(seccion) ? 1 : 0;
         int barra = "Perifericos".equalsIgnoreCase(seccion) ? 1 : 0;
         int otros = "Laptop".equalsIgnoreCase(seccion) || "Accesorios".equalsIgnoreCase(seccion) ? 1 : 0;
