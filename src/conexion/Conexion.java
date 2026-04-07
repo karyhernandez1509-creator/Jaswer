@@ -15,7 +15,7 @@ public class Conexion {
             con = DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/jaswer",
                 "root",
-                "Tvfhwd_03"
+                "Kary123"
             );
 
             System.out.println("Conexion exitosa");

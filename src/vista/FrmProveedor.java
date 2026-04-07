@@ -74,7 +74,7 @@ public class FrmProveedor extends javax.swing.JFrame {
         String razonSocial = jTextField2.getText().trim();
         String nombreComercial = jTextField3.getText().trim();
         String correo = jTextField5.getText().trim();
-        String telefono = jTextField4.getText().trim();
+        String telefono1 = jTextField4.getText().trim();
         String telefono2 = jTextField6.getText().trim();
         String direccion = jTextField8.getText().trim();
         String ciudad = jTextField9.getText().trim();
@@ -136,7 +136,7 @@ public class FrmProveedor extends javax.swing.JFrame {
             agregarSiExiste(columnas, valores, "razon_social", razonSocial);
             agregarSiExiste(columnas, valores, "nombre_comercial", nombreComercial);
             agregarSiExiste(columnas, valores, "correo", correo);
-            agregarSiExiste(columnas, valores, "telefono", telefono);
+            agregarTelefonoPrincipal(columnas, valores, telefono1);
             agregarSiExiste(columnas, valores, "telefono2", telefono2);
             agregarSiExiste(columnas, valores, "direccion", direccion);
             agregarSiExiste(columnas, valores, "ciudad", ciudad);
@@ -144,7 +144,7 @@ public class FrmProveedor extends javax.swing.JFrame {
             agregarSiExiste(columnas, valores, "pais", pais);
             agregarSiExiste(columnas, valores, "tipo_contribuyente", tipoContribuyente);
             if (columnas.contains("obligado_contabilidad")) {
-                valores.put("obligado_contabilidad", "SI".equalsIgnoreCase(obligadoContabilidad) ? 1 : 0);
+                valores.put("obligado_contabilidad", obligadoContabilidad);
             }
             if (columnas.contains("activo")) {
                 valores.put("activo", 1);
@@ -187,6 +187,21 @@ public class FrmProveedor extends javax.swing.JFrame {
     private void agregarSiExiste(Set<String> columnas, Map<String, Object> valores, String columna, String valor) {
         if (columnas.contains(columna) && valor != null && !valor.trim().isEmpty()) {
             valores.put(columna, valor.trim());
+        }
+    }
+
+    private void agregarTelefonoPrincipal(Set<String> columnas, Map<String, Object> valores, String telefono1) {
+        if (telefono1 == null || telefono1.trim().isEmpty()) {
+            return;
+        }
+
+        if (columnas.contains("telefono1")) {
+            valores.put("telefono1", telefono1.trim());
+            return;
+        }
+
+        if (columnas.contains("telefono")) {
+            valores.put("telefono", telefono1.trim());
         }
     }
 

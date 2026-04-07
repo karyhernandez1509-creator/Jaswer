@@ -51,6 +51,7 @@ public class FrmProductos extends javax.swing.JFrame {
 
     private void cargarProveedores() {
         cbProveedor.removeAllItems();
+        cbProveedor.addItem(new ComboItem(-1, "Seleccionar"));
         final String sql = "SELECT id, nombre FROM proveedores WHERE activo = 1 ORDER BY nombre";
 
         try (Connection con = Conexion.conectar()) {
@@ -71,6 +72,7 @@ public class FrmProductos extends javax.swing.JFrame {
                     cbProveedor.addItem(new ComboItem(rs.getInt("id"), rs.getString("nombre")));
                 }
             }
+            cbProveedor.setSelectedIndex(0);
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(
                 this,
@@ -135,6 +137,17 @@ public class FrmProductos extends javax.swing.JFrame {
         int stockMinimo = parseIntOrZero(stockMinimoTexto);
         double precio = parseDoubleOrZero(precioTexto);
 
+        if (proveedor == null || proveedor.id <= 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Selecciona un proveedor antes de guardar.",
+                "Validacion",
+                JOptionPane.WARNING_MESSAGE
+            );
+            cbProveedor.requestFocus();
+            return;
+        }
+
         String seccion = (String) jComboBox2.getSelectedItem();
         int cocina = "Cocina".equalsIgnoreCase(seccion) ? 1 : 0;
         int barra = "Barra".equalsIgnoreCase(seccion) ? 1 : 0;
@@ -177,7 +190,7 @@ public class FrmProductos extends javax.swing.JFrame {
             valores.put(colCosto, costo);
             valores.put(colPrecio, precio);
 
-            if (colProveedor != null && proveedor != null) {
+            if (colProveedor != null && proveedor != null && proveedor.id > 0) {
                 valores.put(colProveedor, proveedor.id);
             }
 
