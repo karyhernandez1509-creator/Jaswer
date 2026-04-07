@@ -41,6 +41,7 @@ public class FrmProductos extends javax.swing.JFrame {
     private void configurarEventos() {
         jButton3.addActionListener(e -> guardarProducto());
         jButton2.addActionListener(e -> limpiarFormulario());
+        btnNuevoProveedor.addActionListener(e -> abrirFrmProveedor());
     }
 
     private void cargarCombosDesdeBD() {
@@ -291,6 +292,14 @@ public class FrmProductos extends javax.swing.JFrame {
             jComboBox2.setSelectedIndex(0);
         }
         txtCodigo.requestFocus();
+    }
+
+    private void abrirFrmProveedor() {
+        FrmProveedor frmProveedor = new FrmProveedor(() -> {
+            cargarProveedores();
+            cbProveedor.repaint();
+        });
+        frmProveedor.setVisible(true);
     }
 
     private static class ComboItem {

@@ -4,6 +4,21 @@
  */
 package vista;
 
+import conexion.Conexion;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author herna
@@ -11,12 +26,191 @@ package vista;
 public class FrmProveedor extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(FrmProveedor.class.getName());
+    private final Runnable onProveedorGuardado;
 
     /**
      * Creates new form FrmProveedor
      */
     public FrmProveedor() {
+        this(null);
+    }
+
+    public FrmProveedor(Runnable onProveedorGuardado) {
+        this.onProveedorGuardado = onProveedorGuardado;
         initComponents();
+        setLocationRelativeTo(null);
+        configurarCombos();
+        configurarEventos();
+    }
+
+    private void configurarCombos() {
+        jComboBox1.setModel(new DefaultComboBoxModel<>(new String[]{
+            "RUC",
+            "Cedula",
+            "Pasaporte",
+            "Consumidor Final"
+        }));
+
+        jComboBox2.setModel(new DefaultComboBoxModel<>(new String[]{
+            "Persona Natural",
+            "Sociedad",
+            "Contribuyente Especial",
+            "Negocio Popular"
+        }));
+
+        jComboBox3.setModel(new DefaultComboBoxModel<>(new String[]{
+            "SI",
+            "NO"
+        }));
+    }
+
+    private void configurarEventos() {
+        jButton2.addActionListener(e -> dispose());
+    }
+
+    private void guardarProveedor() {
+        String tipoIdentificacion = obtenerTextoCombo(jComboBox1);
+        String identificacion = jTextField1.getText().trim();
+        String razonSocial = jTextField2.getText().trim();
+        String nombreComercial = jTextField3.getText().trim();
+        String correo = jTextField5.getText().trim();
+        String telefono = jTextField4.getText().trim();
+        String telefono2 = jTextField6.getText().trim();
+        String direccion = jTextField8.getText().trim();
+        String ciudad = jTextField9.getText().trim();
+        String provincia = jTextField10.getText().trim();
+        String pais = jTextField12.getText().trim();
+        String tipoContribuyente = obtenerTextoCombo(jComboBox2);
+        String obligadoContabilidad = obtenerTextoCombo(jComboBox3);
+
+        String nombreProveedor = !nombreComercial.isEmpty() ? nombreComercial : razonSocial;
+
+        if (nombreProveedor.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Ingresa la razon social o el nombre comercial del proveedor.",
+                "Validacion",
+                JOptionPane.WARNING_MESSAGE
+            );
+            jTextField2.requestFocus();
+            return;
+        }
+
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo conectar a la base de datos.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "proveedores");
+            if (!columnas.contains("nombre")) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla proveedores no tiene la columna obligatoria 'nombre'.",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            if (existeProveedor(con, nombreProveedor)) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Ya existe un proveedor con ese nombre.",
+                    "Validacion",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            Map<String, Object> valores = new LinkedHashMap<>();
+            valores.put("nombre", nombreProveedor);
+
+            agregarSiExiste(columnas, valores, "tipo_identificacion", tipoIdentificacion);
+            agregarSiExiste(columnas, valores, "identificacion", identificacion);
+            agregarSiExiste(columnas, valores, "razon_social", razonSocial);
+            agregarSiExiste(columnas, valores, "nombre_comercial", nombreComercial);
+            agregarSiExiste(columnas, valores, "correo", correo);
+            agregarSiExiste(columnas, valores, "telefono", telefono);
+            agregarSiExiste(columnas, valores, "telefono2", telefono2);
+            agregarSiExiste(columnas, valores, "direccion", direccion);
+            agregarSiExiste(columnas, valores, "ciudad", ciudad);
+            agregarSiExiste(columnas, valores, "provincia", provincia);
+            agregarSiExiste(columnas, valores, "pais", pais);
+            agregarSiExiste(columnas, valores, "tipo_contribuyente", tipoContribuyente);
+            if (columnas.contains("obligado_contabilidad")) {
+                valores.put("obligado_contabilidad", "SI".equalsIgnoreCase(obligadoContabilidad) ? 1 : 0);
+            }
+            if (columnas.contains("activo")) {
+                valores.put("activo", 1);
+            }
+
+            String sql = construirInsert("proveedores", valores);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                int indice = 1;
+                for (Object valor : valores.values()) {
+                    ps.setObject(indice++, valor);
+                }
+                ps.executeUpdate();
+            }
+
+            JOptionPane.showMessageDialog(this, "Proveedor guardado correctamente.");
+            if (onProveedorGuardado != null) {
+                onProveedorGuardado.run();
+            }
+            dispose();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo guardar el proveedor: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private boolean existeProveedor(Connection con, String nombreProveedor) throws SQLException {
+        String sql = "SELECT id FROM proveedores WHERE nombre = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombreProveedor);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private void agregarSiExiste(Set<String> columnas, Map<String, Object> valores, String columna, String valor) {
+        if (columnas.contains(columna) && valor != null && !valor.trim().isEmpty()) {
+            valores.put(columna, valor.trim());
+        }
+    }
+
+    private String obtenerTextoCombo(javax.swing.JComboBox<String> combo) {
+        Object seleccionado = combo.getSelectedItem();
+        return seleccionado == null ? "" : seleccionado.toString().trim();
+    }
+
+    private Set<String> obtenerColumnasTabla(Connection con, String tabla) throws SQLException {
+        Set<String> columnas = new HashSet<>();
+        DatabaseMetaData metaData = con.getMetaData();
+        try (ResultSet rs = metaData.getColumns(con.getCatalog(), null, tabla, null)) {
+            while (rs.next()) {
+                columnas.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        return columnas;
+    }
+
+    private String construirInsert(String tabla, Map<String, Object> valores) {
+        List<String> columnas = new ArrayList<>(valores.keySet());
+        String columnasTexto = String.join(", ", columnas);
+        String placeholders = String.join(", ", java.util.Collections.nCopies(columnas.size(), "?"));
+        return "INSERT INTO " + tabla + " (" + columnasTexto + ") VALUES (" + placeholders + ")";
     }
 
     /**
@@ -182,7 +376,7 @@ public class FrmProveedor extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        guardarProveedor();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
