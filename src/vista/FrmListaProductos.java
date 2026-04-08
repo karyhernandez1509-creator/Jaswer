@@ -41,22 +41,26 @@ public class FrmListaProductos extends javax.swing.JFrame {
 
     private void configurarTabla() {
         DefaultTableModel modelo = new DefaultTableModel(
-            new Object[]{"ID", "Nombre", "Seccion", "Stock", "Accion"},
+            new Object[]{"ID_INTERNO", "Codigo", "Nombre", "Seccion", "Stock", "Accion"},
             0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4;
+                return column == 5;
             }
         };
         tblProductos.setModel(modelo);
-        tblProductos.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
-        tblProductos.getColumnModel().getColumn(4).setCellEditor(
+        tblProductos.getColumnModel().getColumn(0).setMinWidth(0);
+        tblProductos.getColumnModel().getColumn(0).setMaxWidth(0);
+        tblProductos.getColumnModel().getColumn(0).setPreferredWidth(0);
+        tblProductos.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
+        tblProductos.getColumnModel().getColumn(5).setCellEditor(
             new ButtonEditor(new JCheckBox(), this::manejarAccionFila)
         );
     }
 
     private void configurarEventos() {
+        jButton1.addActionListener(e -> regresarAMenuPrincipal());
         btnBuscar.addActionListener(e -> cargarProductos());
         btnLimpiar.addActionListener(e -> limpiarFiltros());
         btnCrearNuevo.addActionListener(e -> {
@@ -64,6 +68,11 @@ public class FrmListaProductos extends javax.swing.JFrame {
             frmProductos.setVisible(true);
             dispose();
         });
+    }
+
+    private void regresarAMenuPrincipal() {
+        new FrmMenuPrincipal().setVisible(true);
+        dispose();
     }
 
     private void inicializarFiltros() {
@@ -133,10 +142,10 @@ public class FrmListaProductos extends javax.swing.JFrame {
             boolean tieneBarra = columnas.contains("barra");
             boolean tieneOtros = columnas.contains("otros");
 
-            if (colId == null || colNombre == null || colStock == null) {
+            if (colId == null || colCodigo == null || colNombre == null || colStock == null) {
                 JOptionPane.showMessageDialog(
                     this,
-                    "La tabla productos no tiene columnas compatibles para listado (id, nombre, stock).",
+                    "La tabla productos no tiene columnas compatibles para listado (id, codigo, nombre, stock).",
                     "Error de esquema",
                     JOptionPane.ERROR_MESSAGE
                 );
@@ -146,6 +155,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
             StringBuilder sql = new StringBuilder();
             sql.append("SELECT p.")
                 .append(colId).append(" AS id, p.")
+                .append(colCodigo).append(" AS codigo, p.")
                 .append(colNombre).append(" AS nombre, p.")
                 .append(colStock).append(" AS stock, ");
 
@@ -181,8 +191,8 @@ public class FrmListaProductos extends javax.swing.JFrame {
             }
 
             if (!codigoFiltro.isEmpty() && colCodigo != null) {
-                condiciones.add("p." + colCodigo + " LIKE ?");
-                parametros.add("%" + codigoFiltro + "%");
+                condiciones.add("p." + colCodigo + " = ?");
+                parametros.add(codigoFiltro);
             }
 
             if (seccionFiltro != null && !"Todos".equalsIgnoreCase(seccionFiltro)) {
@@ -223,6 +233,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
                     while (rs.next()) {
                         modelo.addRow(new Object[]{
                             rs.getObject("id"),
+                            rs.getString("codigo"),
                             rs.getString("nombre"),
                             rs.getString("seccion"),
                             rs.getObject("stock"),
@@ -268,8 +279,8 @@ public class FrmListaProductos extends javax.swing.JFrame {
         }
 
         Object idObj = tblProductos.getValueAt(row, 0);
-        Object nombreObj = tblProductos.getValueAt(row, 1);
-        Object stockObj = tblProductos.getValueAt(row, 3);
+        Object nombreObj = tblProductos.getValueAt(row, 2);
+        Object stockObj = tblProductos.getValueAt(row, 4);
 
         if (idObj == null) {
             JOptionPane.showMessageDialog(this, "No se encontro el ID del producto.");
@@ -397,6 +408,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
 
         panelHeader = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
         panelFiltros = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -424,6 +436,10 @@ public class FrmListaProductos extends javax.swing.JFrame {
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("EL JASWER DEL SOFWER");
         panelHeader.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 15, 400, 30));
+
+        jButton1.setBackground(new java.awt.Color(0, 153, 204));
+        jButton1.setText("Menu Principal");
+        panelHeader.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 20, -1, -1));
 
         getContentPane().add(panelHeader, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 60));
 
@@ -527,6 +543,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
     private javax.swing.JButton btnLimpiar;
     private javax.swing.JComboBox<String> cmbProveedor;
     private javax.swing.JComboBox<String> cmbSeccion;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

@@ -44,6 +44,7 @@ public class FrmProductos extends javax.swing.JFrame {
         inicializarSecciones();
         if (idProductoEdicion != null) {
             cargarProductoParaEdicion(idProductoEdicion);
+            configurarModoEdicion();
         }
     }
 
@@ -216,8 +217,11 @@ public class FrmProductos extends javax.swing.JFrame {
             Map<String, Object> valores = new LinkedHashMap<>();
             valores.put(colCodigo, codigo);
             valores.put(colNombre, nombre);
-            valores.put(colCosto, costo);
             valores.put(colPrecio, precio);
+
+            if (idProductoEdicion == null) {
+                valores.put(colCosto, costo);
+            }
 
             if (colProveedor != null && proveedor != null && proveedor.id > 0) {
                 valores.put(colProveedor, proveedor.id);
@@ -227,11 +231,11 @@ public class FrmProductos extends javax.swing.JFrame {
                 valores.put(colImpuesto, impuesto.id);
             }
 
-            if (colStock != null) {
+            if (colStock != null && idProductoEdicion == null) {
                 valores.put(colStock, stockMinimo);
             }
 
-            if (colStockMinimo != null && !colStockMinimo.equals(colStock)) {
+            if (colStockMinimo != null && !colStockMinimo.equals(colStock) && idProductoEdicion == null) {
                 valores.put(colStockMinimo, stockMinimo);
             }
 
@@ -369,6 +373,13 @@ public class FrmProductos extends javax.swing.JFrame {
             jComboBox2.setSelectedIndex(0);
         }
         txtCodigo.requestFocus();
+    }
+
+    private void configurarModoEdicion() {
+        jTextField1.setEditable(false);
+        jTextField1.setEnabled(false);
+        txtStock.setEditable(false);
+        txtStock.setEnabled(false);
     }
 
     private void cargarProductoParaEdicion(int idProducto) {

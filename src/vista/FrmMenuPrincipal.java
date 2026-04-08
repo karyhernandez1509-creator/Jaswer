@@ -4,6 +4,7 @@
  */
 package vista;
 
+import login.Login;
 import javax.swing.JOptionPane;
 
 /**
@@ -24,6 +25,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     }
 
     private void configurarEventos() {
+        jButton6.addActionListener(e -> cerrarSesion());
         jButton2.addActionListener(e -> abrirListaProductos());
         jButton1.addActionListener(e -> mostrarFuncionalidadFutura());
         jButton3.addActionListener(e -> mostrarFuncionalidadFutura());
@@ -34,6 +36,20 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     private void abrirListaProductos() {
         new FrmListaProductos().setVisible(true);
         dispose();
+    }
+
+    private void cerrarSesion() {
+        int confirmar = JOptionPane.showConfirmDialog(
+            this,
+            "Desea cerrar sesion y volver al login?",
+            "Cerrar sesion",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirmar == JOptionPane.YES_OPTION) {
+            new Login().setVisible(true);
+            dispose();
+        }
     }
 
     private void mostrarFuncionalidadFutura() {
@@ -56,6 +72,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jButton6 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
@@ -75,6 +92,10 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("JASWER DEL SOFTWARE");
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 300, 30));
+
+        jButton6.setBackground(new java.awt.Color(0, 153, 204));
+        jButton6.setText("Cerrar Sesión");
+        jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 20, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 70));
 
@@ -145,6 +166,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
