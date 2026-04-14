@@ -26,21 +26,38 @@ import javax.swing.JOptionPane;
 public class FrmProductos extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(FrmProductos.class.getName());
+    private Integer idProductoEdicion;
 
     /**
      * Creates new form FrmProductos
      */
     public FrmProductos() {
+        this(null);
+    }
+
+    public FrmProductos(Integer idProductoEdicion) {
+        this.idProductoEdicion = idProductoEdicion;
         initComponents();
         setLocationRelativeTo(null);
         configurarEventos();
         cargarCombosDesdeBD();
         inicializarSecciones();
+        if (idProductoEdicion != null) {
+            cargarProductoParaEdicion(idProductoEdicion);
+            configurarModoEdicion();
+        }
     }
 
     private void configurarEventos() {
         jButton3.addActionListener(e -> guardarProducto());
-        jButton2.addActionListener(e -> limpiarFormulario());
+        jButton2.addActionListener(e -> {
+            if (idProductoEdicion != null) {
+                regresarAListaProductos();
+            } else {
+                limpiarFormulario();
+            }
+        });
+        btnNuevoProveedor.addActionListener(e -> abrirFrmProveedor());
     }
 
     private void cargarCombosDesdeBD() {
@@ -50,6 +67,7 @@ public class FrmProductos extends javax.swing.JFrame {
 
     private void cargarProveedores() {
         cbProveedor.removeAllItems();
+        cbProveedor.addItem(new ComboItem(-1, "Seleccionar"));
         final String sql = "SELECT id, nombre FROM proveedores WHERE activo = 1 ORDER BY nombre";
 
         try (Connection con = Conexion.conectar()) {
@@ -70,6 +88,7 @@ public class FrmProductos extends javax.swing.JFrame {
                     cbProveedor.addItem(new ComboItem(rs.getInt("id"), rs.getString("nombre")));
                 }
             }
+            cbProveedor.setSelectedIndex(0);
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(
                 this,
@@ -115,9 +134,11 @@ public class FrmProductos extends javax.swing.JFrame {
 
     private void inicializarSecciones() {
         DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
-        modelo.addElement("Cocina");
-        modelo.addElement("Barra");
-        modelo.addElement("Otros");
+        modelo.addElement("Seleccionar");
+        modelo.addElement("Hardware");
+        modelo.addElement("Perifericos");
+        modelo.addElement("Laptop");
+        modelo.addElement("Accesorios");
         jComboBox2.setModel(modelo);
     }
 
@@ -134,10 +155,32 @@ public class FrmProductos extends javax.swing.JFrame {
         int stockMinimo = parseIntOrZero(stockMinimoTexto);
         double precio = parseDoubleOrZero(precioTexto);
 
+        if (proveedor == null || proveedor.id <= 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Selecciona un proveedor antes de guardar.",
+                "Validacion",
+                JOptionPane.WARNING_MESSAGE
+            );
+            cbProveedor.requestFocus();
+            return;
+        }
+
         String seccion = (String) jComboBox2.getSelectedItem();
-        int cocina = "Cocina".equalsIgnoreCase(seccion) ? 1 : 0;
-        int barra = "Barra".equalsIgnoreCase(seccion) ? 1 : 0;
-        int otros = "Otros".equalsIgnoreCase(seccion) ? 1 : 0;
+        if (seccion == null || "Seleccionar".equalsIgnoreCase(seccion)) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Selecciona una categoria antes de guardar.",
+                "Validacion",
+                JOptionPane.WARNING_MESSAGE
+            );
+            jComboBox2.requestFocus();
+            return;
+        }
+
+        int cocina = "Hardware".equalsIgnoreCase(seccion) ? 1 : 0;
+        int barra = "Perifericos".equalsIgnoreCase(seccion) ? 1 : 0;
+        int otros = "Laptop".equalsIgnoreCase(seccion) || "Accesorios".equalsIgnoreCase(seccion) ? 1 : 0;
 
         try (Connection con = Conexion.conectar()) {
             if (con == null) {
@@ -154,6 +197,7 @@ public class FrmProductos extends javax.swing.JFrame {
             String colPrecio = buscarColumna(columnas, "precio", "precio_venta", "pvp", "valor_venta");
             String colStock = buscarColumna(columnas, "stock", "existencia");
             String colStockMinimo = buscarColumna(columnas, "stock_minimo", "stockminimo", "stock_min");
+            String colTipo = buscarColumna(columnas, "tipo", "categoria", "seccion");
 
             if (colCodigo == null || colNombre == null || colCosto == null || colPrecio == null) {
                 JOptionPane.showMessageDialog(
@@ -173,10 +217,13 @@ public class FrmProductos extends javax.swing.JFrame {
             Map<String, Object> valores = new LinkedHashMap<>();
             valores.put(colCodigo, codigo);
             valores.put(colNombre, nombre);
-            valores.put(colCosto, costo);
             valores.put(colPrecio, precio);
 
-            if (colProveedor != null && proveedor != null) {
+            if (idProductoEdicion == null) {
+                valores.put(colCosto, costo);
+            }
+
+            if (colProveedor != null && proveedor != null && proveedor.id > 0) {
                 valores.put(colProveedor, proveedor.id);
             }
 
@@ -184,12 +231,16 @@ public class FrmProductos extends javax.swing.JFrame {
                 valores.put(colImpuesto, impuesto.id);
             }
 
-            if (colStock != null) {
+            if (colStock != null && idProductoEdicion == null) {
                 valores.put(colStock, stockMinimo);
             }
 
-            if (colStockMinimo != null && !colStockMinimo.equals(colStock)) {
+            if (colStockMinimo != null && !colStockMinimo.equals(colStock) && idProductoEdicion == null) {
                 valores.put(colStockMinimo, stockMinimo);
+            }
+
+            if (colTipo != null) {
+                valores.put(colTipo, seccion);
             }
 
             if (columnas.contains("cocina")) {
@@ -205,17 +256,40 @@ public class FrmProductos extends javax.swing.JFrame {
                 valores.put("activo", 1);
             }
 
-            String sql = construirInsert("productos", valores);
+            String sql;
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            if (idProductoEdicion != null && colId == null) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "La tabla productos no tiene una columna ID compatible para editar.",
+                    "Error de esquema",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            if (idProductoEdicion == null) {
+                sql = construirInsert("productos", valores);
+            } else {
+                sql = construirUpdate("productos", valores, colId);
+            }
+
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 int index = 1;
                 for (Object valor : valores.values()) {
                     ps.setObject(index++, valor);
                 }
+                if (idProductoEdicion != null) {
+                    ps.setObject(index, idProductoEdicion);
+                }
                 ps.executeUpdate();
             }
 
-            JOptionPane.showMessageDialog(this, "Producto guardado correctamente.");
-            limpiarFormulario();
+            JOptionPane.showMessageDialog(
+                this,
+                idProductoEdicion == null ? "Producto guardado correctamente." : "Producto actualizado correctamente."
+            );
+            regresarAListaProductos();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(
                 this,
@@ -275,6 +349,14 @@ public class FrmProductos extends javax.swing.JFrame {
         return "INSERT INTO " + tabla + " (" + columnasTexto + ") VALUES (" + placeholders + ")";
     }
 
+    private String construirUpdate(String tabla, Map<String, Object> valores, String columnaId) {
+        List<String> asignaciones = new ArrayList<>();
+        for (String columna : valores.keySet()) {
+            asignaciones.add(columna + " = ?");
+        }
+        return "UPDATE " + tabla + " SET " + String.join(", ", asignaciones) + " WHERE " + columnaId + " = ?";
+    }
+
     private void limpiarFormulario() {
         txtCodigo.setText("");
         txtNombre.setText("");
@@ -291,6 +373,160 @@ public class FrmProductos extends javax.swing.JFrame {
             jComboBox2.setSelectedIndex(0);
         }
         txtCodigo.requestFocus();
+    }
+
+    private void configurarModoEdicion() {
+        jTextField1.setEditable(false);
+        jTextField1.setEnabled(false);
+        txtStock.setEditable(false);
+        txtStock.setEnabled(false);
+    }
+
+    private void cargarProductoParaEdicion(int idProducto) {
+        try (Connection con = Conexion.conectar()) {
+            if (con == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
+                return;
+            }
+
+            Set<String> columnas = obtenerColumnasTabla(con, "productos");
+            String colId = buscarColumna(columnas, "id", "id_producto");
+            String colCodigo = buscarColumna(columnas, "codigo", "codigo_producto", "cod_producto");
+            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
+            String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
+            String colImpuesto = buscarColumna(columnas, "impuesto_id", "id_impuesto", "impuesto");
+            String colCosto = buscarColumna(columnas, "costo", "coste", "costo_compra");
+            String colPrecio = buscarColumna(columnas, "precio", "precio_venta", "pvp", "valor_venta");
+            String colStock = buscarColumna(columnas, "stock", "existencia");
+            String colStockMinimo = buscarColumna(columnas, "stock_minimo", "stockminimo", "stock_min");
+            String colTipo = buscarColumna(columnas, "tipo", "categoria", "seccion");
+
+            if (colId == null) {
+                JOptionPane.showMessageDialog(this, "No se encontro una columna ID compatible para editar.");
+                return;
+            }
+
+            List<String> seleccion = new ArrayList<>();
+            seleccion.add(colId + " AS id");
+            if (colCodigo != null) {
+                seleccion.add(colCodigo + " AS codigo");
+            }
+            if (colNombre != null) {
+                seleccion.add(colNombre + " AS nombre");
+            }
+            if (colProveedor != null) {
+                seleccion.add(colProveedor + " AS proveedor_id");
+            }
+            if (colImpuesto != null) {
+                seleccion.add(colImpuesto + " AS impuesto_id");
+            }
+            if (colCosto != null) {
+                seleccion.add(colCosto + " AS costo");
+            }
+            if (colPrecio != null) {
+                seleccion.add(colPrecio + " AS precio");
+            }
+            if (colStock != null) {
+                seleccion.add(colStock + " AS stock");
+            }
+            if (colStockMinimo != null && !colStockMinimo.equalsIgnoreCase(colStock)) {
+                seleccion.add(colStockMinimo + " AS stock_minimo");
+            }
+            if (colTipo != null) {
+                seleccion.add(colTipo + " AS tipo");
+            }
+            if (columnas.contains("cocina")) {
+                seleccion.add("cocina");
+            }
+            if (columnas.contains("barra")) {
+                seleccion.add("barra");
+            }
+            if (columnas.contains("otros")) {
+                seleccion.add("otros");
+            }
+
+            String sql = "SELECT " + String.join(", ", seleccion) + " FROM productos WHERE " + colId + " = ?";
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, idProducto);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        JOptionPane.showMessageDialog(this, "No se encontro el producto seleccionado.");
+                        return;
+                    }
+
+                    txtCodigo.setText(valorTexto(rs, "codigo"));
+                    txtNombre.setText(valorTexto(rs, "nombre"));
+                    jTextField1.setText(valorTexto(rs, "costo"));
+                    txtPrecio.setText(valorTexto(rs, "precio"));
+
+                    String stockValor = valorTexto(rs, "stock");
+                    if (stockValor.isEmpty()) {
+                        stockValor = valorTexto(rs, "stock_minimo");
+                    }
+                    txtStock.setText(stockValor.isEmpty() ? "0" : stockValor);
+
+                    seleccionarComboItem(cbProveedor, rs.getInt("proveedor_id"));
+                    if (rs.wasNull()) {
+                        cbProveedor.setSelectedIndex(0);
+                    }
+
+                    seleccionarComboItem(jComboBox1, rs.getInt("impuesto_id"));
+                    if (rs.wasNull() && jComboBox1.getItemCount() > 0) {
+                        jComboBox1.setSelectedIndex(0);
+                    }
+
+                    String tipo = valorTexto(rs, "tipo");
+                    if (!tipo.isEmpty()) {
+                        jComboBox2.setSelectedItem(tipo);
+                    } else if (columnas.contains("cocina") && rs.getInt("cocina") == 1) {
+                        jComboBox2.setSelectedItem("Hardware");
+                    } else if (columnas.contains("barra") && rs.getInt("barra") == 1) {
+                        jComboBox2.setSelectedItem("Perifericos");
+                    } else if (columnas.contains("otros") && rs.getInt("otros") == 1) {
+                        jComboBox2.setSelectedItem("Laptop");
+                    } else {
+                        jComboBox2.setSelectedItem("Seleccionar");
+                    }
+                }
+            }
+
+            jButton3.setText("Actualizar");
+            setTitle("Editar Producto");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudo cargar el producto para editar: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private String valorTexto(ResultSet rs, String columna) throws SQLException {
+        try {
+            Object valor = rs.getObject(columna);
+            return valor == null ? "" : String.valueOf(valor);
+        } catch (SQLException ex) {
+            return "";
+        }
+    }
+
+    private void seleccionarComboItem(javax.swing.JComboBox<ComboItem> combo, int idBuscado) {
+        for (int i = 0; i < combo.getItemCount(); i++) {
+            ComboItem item = combo.getItemAt(i);
+            if (item != null && item.id == idBuscado) {
+                combo.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    private void abrirFrmProveedor() {
+        FrmProveedor frmProveedor = new FrmProveedor(() -> {
+            cargarProveedores();
+            cbProveedor.repaint();
+        });
+        frmProveedor.setVisible(true);
     }
 
     private static class ComboItem {

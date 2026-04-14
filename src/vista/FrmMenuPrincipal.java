@@ -4,6 +4,9 @@
  */
 package vista;
 
+import login.Login;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author herna
@@ -17,6 +20,45 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
      */
     public FrmMenuPrincipal() {
         initComponents();
+        setLocationRelativeTo(null);
+        configurarEventos();
+    }
+
+    private void configurarEventos() {
+        jButton6.addActionListener(e -> cerrarSesion());
+        jButton2.addActionListener(e -> abrirListaProductos());
+        jButton1.addActionListener(e -> mostrarFuncionalidadFutura());
+        jButton3.addActionListener(e -> mostrarFuncionalidadFutura());
+        jButton4.addActionListener(e -> mostrarFuncionalidadFutura());
+        jButton5.addActionListener(e -> mostrarFuncionalidadFutura());
+    }
+
+    private void abrirListaProductos() {
+        new FrmListaProductos().setVisible(true);
+        dispose();
+    }
+
+    private void cerrarSesion() {
+        int confirmar = JOptionPane.showConfirmDialog(
+            this,
+            "Desea cerrar sesion y volver al login?",
+            "Cerrar sesion",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirmar == JOptionPane.YES_OPTION) {
+            new Login().setVisible(true);
+            dispose();
+        }
+    }
+
+    private void mostrarFuncionalidadFutura() {
+        JOptionPane.showMessageDialog(
+            this,
+            "Esta funcionalidad estara disponible proximamente.",
+            "Funcionalidad futura",
+            JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
     /**
@@ -30,6 +72,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jButton6 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
@@ -50,16 +93,19 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jLabel1.setText("JASWER DEL SOFTWARE");
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 300, 30));
 
+        jButton6.setBackground(new java.awt.Color(0, 153, 204));
+        jButton6.setText("Cerrar Sesión");
+        jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 20, -1, -1));
+
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 70));
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/vista/icono.jpeg"))); // NOI18N
-        jLabel2.setText("jLabel2");
-        jPanel2.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -60, 380, 690));
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/vista/icono.jpg"))); // NOI18N
+        jPanel2.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, 670));
 
-        getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 100, 340, 680));
+        getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 70, 340, 710));
 
         jPanel3.setBackground(new java.awt.Color(250, 250, 250));
         jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -120,6 +166,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;

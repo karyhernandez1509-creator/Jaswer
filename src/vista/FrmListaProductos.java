@@ -11,7 +11,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.swing.JCheckBox;
@@ -35,28 +37,33 @@ public class FrmListaProductos extends javax.swing.JFrame {
         configurarTabla();
         configurarEventos();
         inicializarFiltros();
-        cargarProveedores();
+        cargarSecciones();
+        cargarProveedoresDesdeBD();
         cargarProductos();
     }
 
     private void configurarTabla() {
         DefaultTableModel modelo = new DefaultTableModel(
-            new Object[]{"ID", "Nombre", "Seccion", "Stock", "Accion"},
+            new Object[]{"ID_INTERNO", "Codigo", "Nombre", "Seccion", "Stock", "Accion"},
             0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4;
+                return column == 5;
             }
         };
         tblProductos.setModel(modelo);
-        tblProductos.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
-        tblProductos.getColumnModel().getColumn(4).setCellEditor(
+        tblProductos.getColumnModel().getColumn(0).setMinWidth(0);
+        tblProductos.getColumnModel().getColumn(0).setMaxWidth(0);
+        tblProductos.getColumnModel().getColumn(0).setPreferredWidth(0);
+        tblProductos.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
+        tblProductos.getColumnModel().getColumn(5).setCellEditor(
             new ButtonEditor(new JCheckBox(), this::manejarAccionFila)
         );
     }
 
     private void configurarEventos() {
+        jButton1.addActionListener(e -> regresarAMenuPrincipal());
         btnBuscar.addActionListener(e -> cargarProductos());
         btnLimpiar.addActionListener(e -> limpiarFiltros());
         btnCrearNuevo.addActionListener(e -> {
@@ -66,18 +73,58 @@ public class FrmListaProductos extends javax.swing.JFrame {
         });
     }
 
+    private void regresarAMenuPrincipal() {
+        new FrmMenuPrincipal().setVisible(true);
+        dispose();
+    }
+
     private void inicializarFiltros() {
         cmbSeccion.removeAllItems();
         cmbSeccion.addItem("Todos");
-        cmbSeccion.addItem("Cocina");
-        cmbSeccion.addItem("Barra");
-        cmbSeccion.addItem("Otros");
 
         cmbProveedor.removeAllItems();
         cmbProveedor.addItem("Todos");
     }
 
-    private void cargarProveedores() {
+    private void cargarSecciones() {
+        Set<String> secciones = new LinkedHashSet<>(Arrays.asList(
+            "Hardware",
+            "Perifericos",
+            "Laptop",
+            "Accesorios"
+        ));
+
+        final String sql = "SELECT DISTINCT tipo FROM productos "
+            + "WHERE tipo IS NOT NULL AND TRIM(tipo) <> '' ORDER BY tipo";
+
+        try (Connection con = Conexion.conectar()) {
+            if (con != null) {
+                Set<String> columnas = obtenerColumnasTabla(con, "productos");
+                String colTipo = buscarColumna(columnas, "tipo", "categoria", "seccion");
+                if (colTipo != null) {
+                    try (PreparedStatement ps = con.prepareStatement(sql.replace("tipo", colTipo));
+                         ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            secciones.add(rs.getString(1));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No se pudieron cargar las secciones: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+
+        for (String seccion : secciones) {
+            cmbSeccion.addItem(seccion);
+        }
+    }
+
+    private void cargarProveedoresDesdeBD() {
         final String sql = "SELECT nombre FROM proveedores WHERE activo = 1 ORDER BY nombre";
         try (Connection con = Conexion.conectar()) {
             if (con == null) {
@@ -127,14 +174,15 @@ public class FrmListaProductos extends javax.swing.JFrame {
             String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
             String colProveedor = buscarColumna(columnas, "proveedor_id", "id_proveedor", "proveedor");
             String colActivo = buscarColumna(columnas, "activo", "estado");
+            String colTipo = buscarColumna(columnas, "tipo", "categoria", "seccion");
             boolean tieneCocina = columnas.contains("cocina");
             boolean tieneBarra = columnas.contains("barra");
             boolean tieneOtros = columnas.contains("otros");
 
-            if (colId == null || colNombre == null || colStock == null) {
+            if (colId == null || colCodigo == null || colNombre == null || colStock == null) {
                 JOptionPane.showMessageDialog(
                     this,
-                    "La tabla productos no tiene columnas compatibles para listado (id, nombre, stock).",
+                    "La tabla productos no tiene columnas compatibles para listado (id, codigo, nombre, stock).",
                     "Error de esquema",
                     JOptionPane.ERROR_MESSAGE
                 );
@@ -144,19 +192,22 @@ public class FrmListaProductos extends javax.swing.JFrame {
             StringBuilder sql = new StringBuilder();
             sql.append("SELECT p.")
                 .append(colId).append(" AS id, p.")
+                .append(colCodigo).append(" AS codigo, p.")
                 .append(colNombre).append(" AS nombre, p.")
                 .append(colStock).append(" AS stock, ");
 
-            if (tieneCocina || tieneBarra || tieneOtros) {
+            if (colTipo != null) {
+                sql.append("COALESCE(p.").append(colTipo).append(", 'Sin seccion') AS seccion ");
+            } else if (tieneCocina || tieneBarra || tieneOtros) {
                 sql.append("CASE ");
                 if (tieneCocina) {
-                    sql.append("WHEN p.cocina = 1 THEN 'Cocina' ");
+                    sql.append("WHEN p.cocina = 1 THEN 'Hardware' ");
                 }
                 if (tieneBarra) {
-                    sql.append("WHEN p.barra = 1 THEN 'Barra' ");
+                    sql.append("WHEN p.barra = 1 THEN 'Perifericos' ");
                 }
                 if (tieneOtros) {
-                    sql.append("WHEN p.otros = 1 THEN 'Otros' ");
+                    sql.append("WHEN p.otros = 1 THEN 'Laptop' ");
                 }
                 sql.append("ELSE 'Sin seccion' END AS seccion ");
             } else {
@@ -177,16 +228,19 @@ public class FrmListaProductos extends javax.swing.JFrame {
             }
 
             if (!codigoFiltro.isEmpty() && colCodigo != null) {
-                condiciones.add("p." + colCodigo + " LIKE ?");
-                parametros.add("%" + codigoFiltro + "%");
+                condiciones.add("p." + colCodigo + " = ?");
+                parametros.add(codigoFiltro);
             }
 
             if (seccionFiltro != null && !"Todos".equalsIgnoreCase(seccionFiltro)) {
-                if ("Cocina".equalsIgnoreCase(seccionFiltro) && tieneCocina) {
+                if (colTipo != null) {
+                    condiciones.add("p." + colTipo + " = ?");
+                    parametros.add(seccionFiltro);
+                } else if ("Hardware".equalsIgnoreCase(seccionFiltro) && tieneCocina) {
                     condiciones.add("p.cocina = 1");
-                } else if ("Barra".equalsIgnoreCase(seccionFiltro) && tieneBarra) {
+                } else if ("Perifericos".equalsIgnoreCase(seccionFiltro) && tieneBarra) {
                     condiciones.add("p.barra = 1");
-                } else if ("Otros".equalsIgnoreCase(seccionFiltro) && tieneOtros) {
+                } else if (("Laptop".equalsIgnoreCase(seccionFiltro) || "Accesorios".equalsIgnoreCase(seccionFiltro)) && tieneOtros) {
                     condiciones.add("p.otros = 1");
                 }
             }
@@ -216,6 +270,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
                     while (rs.next()) {
                         modelo.addRow(new Object[]{
                             rs.getObject("id"),
+                            rs.getString("codigo"),
                             rs.getString("nombre"),
                             rs.getString("seccion"),
                             rs.getObject("stock"),
@@ -261,8 +316,8 @@ public class FrmListaProductos extends javax.swing.JFrame {
         }
 
         Object idObj = tblProductos.getValueAt(row, 0);
-        Object nombreObj = tblProductos.getValueAt(row, 1);
-        Object stockObj = tblProductos.getValueAt(row, 3);
+        Object nombreObj = tblProductos.getValueAt(row, 2);
+        Object stockObj = tblProductos.getValueAt(row, 4);
 
         if (idObj == null) {
             JOptionPane.showMessageDialog(this, "No se encontro el ID del producto.");
@@ -303,81 +358,9 @@ public class FrmListaProductos extends javax.swing.JFrame {
     }
 
     private void editarProducto(int idProducto, String nombreActual, int stockActual) {
-        String nuevoNombre = JOptionPane.showInputDialog(
-            this,
-            "Nuevo nombre:",
-            nombreActual
-        );
-
-        if (nuevoNombre == null) {
-            return;
-        }
-        nuevoNombre = nuevoNombre.trim();
-        if (nuevoNombre.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El nombre no puede quedar vacio.");
-            return;
-        }
-
-        String nuevoStockTexto = JOptionPane.showInputDialog(
-            this,
-            "Nuevo stock:",
-            stockActual
-        );
-        if (nuevoStockTexto == null) {
-            return;
-        }
-
-        int nuevoStock;
-        try {
-            nuevoStock = Integer.parseInt(nuevoStockTexto.trim());
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "El stock debe ser numerico.");
-            return;
-        }
-
-        try (Connection con = Conexion.conectar()) {
-            if (con == null) {
-                JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
-                return;
-            }
-
-            Set<String> columnas = obtenerColumnasTabla(con, "productos");
-            String colId = buscarColumna(columnas, "id", "id_producto");
-            String colNombre = buscarColumna(columnas, "nombre", "nombre_producto", "descripcion");
-            String colStock = buscarColumna(columnas, "stock", "existencia", "stock_minimo", "stockminimo");
-
-            if (colId == null || colNombre == null || colStock == null) {
-                JOptionPane.showMessageDialog(
-                    this,
-                    "La tabla productos no tiene columnas compatibles para editar (id, nombre, stock).",
-                    "Error de esquema",
-                    JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            String sql = "UPDATE productos SET " + colNombre + " = ?, " + colStock + " = ? WHERE " + colId + " = ?";
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, nuevoNombre);
-                ps.setInt(2, nuevoStock);
-                ps.setInt(3, idProducto);
-
-                int filas = ps.executeUpdate();
-                if (filas > 0) {
-                    JOptionPane.showMessageDialog(this, "Producto actualizado correctamente.");
-                    cargarProductos();
-                } else {
-                    JOptionPane.showMessageDialog(this, "No se actualizo ningun producto.");
-                }
-            }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(
-                this,
-                "No se pudo editar el producto: " + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
+        FrmProductos frmProductos = new FrmProductos(idProducto);
+        frmProductos.setVisible(true);
+        dispose();
     }
 
     private void eliminarProducto(int idProducto, String nombreProducto) {
@@ -462,6 +445,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
 
         panelHeader = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
         panelFiltros = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -489,6 +473,10 @@ public class FrmListaProductos extends javax.swing.JFrame {
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("EL JASWER DEL SOFWER");
         panelHeader.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 15, 400, 30));
+
+        jButton1.setBackground(new java.awt.Color(0, 153, 204));
+        jButton1.setText("Menu Principal");
+        panelHeader.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 20, -1, -1));
 
         getContentPane().add(panelHeader, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 60));
 
@@ -592,6 +580,7 @@ public class FrmListaProductos extends javax.swing.JFrame {
     private javax.swing.JButton btnLimpiar;
     private javax.swing.JComboBox<String> cmbProveedor;
     private javax.swing.JComboBox<String> cmbSeccion;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
