@@ -219,9 +219,7 @@ public class FrmProductos extends javax.swing.JFrame {
             valores.put(colNombre, nombre);
             valores.put(colPrecio, precio);
 
-            if (idProductoEdicion == null) {
-                valores.put(colCosto, costo);
-            }
+            valores.put(colCosto, costo);
 
             if (colProveedor != null && proveedor != null && proveedor.id > 0) {
                 valores.put(colProveedor, proveedor.id);
@@ -231,11 +229,11 @@ public class FrmProductos extends javax.swing.JFrame {
                 valores.put(colImpuesto, impuesto.id);
             }
 
-            if (colStock != null && idProductoEdicion == null) {
+            if (colStock != null) {
                 valores.put(colStock, stockMinimo);
             }
 
-            if (colStockMinimo != null && !colStockMinimo.equals(colStock) && idProductoEdicion == null) {
+            if (colStockMinimo != null && !colStockMinimo.equals(colStock)) {
                 valores.put(colStockMinimo, stockMinimo);
             }
 
@@ -376,10 +374,10 @@ public class FrmProductos extends javax.swing.JFrame {
     }
 
     private void configurarModoEdicion() {
-        jTextField1.setEditable(false);
-        jTextField1.setEnabled(false);
-        txtStock.setEditable(false);
-        txtStock.setEnabled(false);
+        jTextField1.setEditable(true);
+        jTextField1.setEnabled(true);
+        txtStock.setEditable(true);
+        txtStock.setEnabled(true);
     }
 
     private void cargarProductoParaEdicion(int idProducto) {
