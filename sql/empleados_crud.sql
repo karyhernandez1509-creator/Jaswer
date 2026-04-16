@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS empleados (
     nombre VARCHAR(120) NOT NULL,
     usuario VARCHAR(60) NOT NULL,
     contrasena VARCHAR(120) NOT NULL,
+    es_admin TINYINT(1) NOT NULL DEFAULT 0,
     activo TINYINT(1) NOT NULL DEFAULT 1,
     creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -13,8 +14,8 @@ CREATE TABLE IF NOT EXISTS empleados (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Usuario admin inicial para pruebas (opcional)
-INSERT INTO empleados (codigo, nombre, usuario, contrasena, activo)
-SELECT 'EMP-ADMIN', 'Administrador General', 'admin_empleado', 'admin123', 1
+INSERT INTO empleados (codigo, nombre, usuario, contrasena, es_admin, activo)
+SELECT 'EMP-ADMIN', 'Administrador General', 'admin_empleado', 'admin123', 1, 1
 WHERE NOT EXISTS (
     SELECT 1 FROM empleados WHERE usuario = 'admin_empleado'
 );
