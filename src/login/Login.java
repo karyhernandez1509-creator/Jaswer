@@ -5,6 +5,7 @@
 package login;
 
 import conexion.Conexion;
+import conexion.EsquemaEmpleados;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -101,13 +102,18 @@ public class Login extends javax.swing.JFrame {
             }
 
             if (tablaExiste(con, "empleados")) {
+                EsquemaEmpleados.asegurarColumnaEsAdmin(con);
                 try (PreparedStatement ps = con.prepareStatement(sqlEmpleados)) {
                     ps.setString(1, usuario);
                     ps.setString(2, contrasena);
 
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
-                            return ResultadoLogin.exitoso(rs.getInt("es_admin") == 1);
+                            boolean esAdmin = rs.getInt("es_admin") == 1
+                                || "admin".equalsIgnoreCase(usuario)
+                                || "administrador".equalsIgnoreCase(usuario)
+                                || "admin_empleado".equalsIgnoreCase(usuario);
+                            return ResultadoLogin.exitoso(esAdmin);
                         }
                     }
                 }

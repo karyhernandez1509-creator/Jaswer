@@ -1,6 +1,7 @@
 package vista;
 
 import conexion.Conexion;
+import conexion.EsquemaEmpleados;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -109,6 +110,7 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
                 return;
             }
 
+            EsquemaEmpleados.asegurarColumnaEsAdmin(con);
             validarEstructuraEmpleados(con);
 
             try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
