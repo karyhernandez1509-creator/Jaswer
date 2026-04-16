@@ -27,7 +27,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     private void configurarEventos() {
         jButton6.addActionListener(e -> cerrarSesion());
         jButton2.addActionListener(e -> abrirListaProductos());
-        jButton1.addActionListener(e -> mostrarFuncionalidadFutura());
+        jButton1.addActionListener(e -> abrirListaEmpleados());
         jButton3.addActionListener(e -> mostrarFuncionalidadFutura());
         jButton4.addActionListener(e -> mostrarFuncionalidadFutura());
         jButton5.addActionListener(e -> mostrarFuncionalidadFutura());
@@ -35,6 +35,11 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
 
     private void abrirListaProductos() {
         new FrmListaProductos().setVisible(true);
+        dispose();
+    }
+
+    private void abrirListaEmpleados() {
+        new FrmListaEmpleados().setVisible(true);
         dispose();
     }
 
@@ -110,7 +115,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jPanel3.setBackground(new java.awt.Color(250, 250, 250));
         jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jButton1.setText("Reportes");
+        jButton1.setText("Administrar Empleados");
         jButton1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 160, 120, 100));
 
