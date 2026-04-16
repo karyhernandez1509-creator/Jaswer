@@ -5,14 +5,17 @@
 package login;
 
 import conexion.Conexion;
+import conexion.EsquemaEmpleados;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
+import modelo.SesionUsuario;
 import vista.FrmMenuPrincipal;
 
 /**
@@ -67,7 +70,9 @@ public class Login extends javax.swing.JFrame {
             return;
         }
 
-        if (autenticarUsuario(usuario, contrasena)) {
+        ResultadoLogin resultado = autenticarUsuario(usuario, contrasena);
+        if (resultado.autenticado) {
+            SesionUsuario.iniciarSesion(usuario, resultado.esAdministrador);
             new FrmMenuPrincipal().setVisible(true);
             dispose();
             return;
@@ -81,8 +86,9 @@ public class Login extends javax.swing.JFrame {
         );
     }
 
-    private boolean autenticarUsuario(String usuario, String contrasena) {
-        final String sql = "SELECT 1 FROM usuarios WHERE usuario = ? AND contrasena = ? LIMIT 1";
+    private ResultadoLogin autenticarUsuario(String usuario, String contrasena) {
+        final String sqlEmpleados = "SELECT es_admin FROM empleados WHERE usuario = ? AND contrasena = ? AND activo = 1 LIMIT 1";
+        final String sqlUsuarios = "SELECT 1 FROM usuarios WHERE usuario = ? AND contrasena = ? LIMIT 1";
 
         try (Connection con = Conexion.conectar()) {
             if (con == null) {
@@ -92,17 +98,42 @@ public class Login extends javax.swing.JFrame {
                     "Error de conexion",
                     JOptionPane.ERROR_MESSAGE
                 );
-                return false;
+                return ResultadoLogin.fallido();
             }
 
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, usuario);
-                ps.setString(2, contrasena);
+            if (tablaExiste(con, "empleados")) {
+                EsquemaEmpleados.asegurarColumnaEsAdmin(con);
+                try (PreparedStatement ps = con.prepareStatement(sqlEmpleados)) {
+                    ps.setString(1, usuario);
+                    ps.setString(2, contrasena);
 
-                try (ResultSet rs = ps.executeQuery()) {
-                    return rs.next();
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            boolean esAdmin = rs.getInt("es_admin") == 1
+                                || "admin".equalsIgnoreCase(usuario)
+                                || "administrador".equalsIgnoreCase(usuario)
+                                || "admin_empleado".equalsIgnoreCase(usuario);
+                            return ResultadoLogin.exitoso(esAdmin);
+                        }
+                    }
                 }
             }
+
+            if (tablaExiste(con, "usuarios")) {
+                try (PreparedStatement ps = con.prepareStatement(sqlUsuarios)) {
+                    ps.setString(1, usuario);
+                    ps.setString(2, contrasena);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            boolean esAdminLegacy = "admin".equalsIgnoreCase(usuario)
+                                || "administrador".equalsIgnoreCase(usuario);
+                            return ResultadoLogin.exitoso(esAdminLegacy);
+                        }
+                    }
+                }
+            }
+
+            return ResultadoLogin.fallido();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(
                 this,
@@ -110,7 +141,32 @@ public class Login extends javax.swing.JFrame {
                 "Error SQL",
                 JOptionPane.ERROR_MESSAGE
             );
-            return false;
+            return ResultadoLogin.fallido();
+        }
+    }
+
+    private boolean tablaExiste(Connection con, String nombreTabla) throws SQLException {
+        DatabaseMetaData metaData = con.getMetaData();
+        try (ResultSet rs = metaData.getTables(con.getCatalog(), null, nombreTabla, null)) {
+            return rs.next();
+        }
+    }
+
+    private static class ResultadoLogin {
+        private final boolean autenticado;
+        private final boolean esAdministrador;
+
+        private ResultadoLogin(boolean autenticado, boolean esAdministrador) {
+            this.autenticado = autenticado;
+            this.esAdministrador = esAdministrador;
+        }
+
+        private static ResultadoLogin exitoso(boolean esAdministrador) {
+            return new ResultadoLogin(true, esAdministrador);
+        }
+
+        private static ResultadoLogin fallido() {
+            return new ResultadoLogin(false, false);
         }
     }
 

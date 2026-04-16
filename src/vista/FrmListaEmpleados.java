@@ -1,6 +1,7 @@
 package vista;
 
 import conexion.Conexion;
+import conexion.EsquemaEmpleados;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -11,12 +12,32 @@ import java.util.Set;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import modelo.SesionUsuario;
 
 public class FrmListaEmpleados extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(FrmListaEmpleados.class.getName());
+    private final String usuarioSesion;
+    private final boolean esAdminSesion;
 
     public FrmListaEmpleados() {
+        this(SesionUsuario.getUsuario(), SesionUsuario.esAdministrador());
+    }
+
+    public FrmListaEmpleados(String usuarioSesion, boolean esAdminSesion) {
+        this.usuarioSesion = usuarioSesion == null ? "" : usuarioSesion;
+        this.esAdminSesion = esAdminSesion;
+        if (!this.esAdminSesion) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Solo un administrador puede acceder a esta pantalla.",
+                "Acceso denegado",
+                JOptionPane.WARNING_MESSAGE
+            );
+            new FrmMenuPrincipal().setVisible(true);
+            dispose();
+            return;
+        }
         initComponents();
         setLocationRelativeTo(null);
         configurarTabla();
@@ -26,12 +47,12 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
 
     private void configurarTabla() {
         DefaultTableModel modelo = new DefaultTableModel(
-            new Object[]{"ID_INTERNO", "Codigo", "Nombre", "Usuario", "Accion"},
+            new Object[]{"ID_INTERNO", "Codigo", "Nombre", "Usuario", "Rol", "Accion"},
             0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4;
+                return column == 5;
             }
         };
 
@@ -39,8 +60,8 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
         tblEmpleados.getColumnModel().getColumn(0).setMinWidth(0);
         tblEmpleados.getColumnModel().getColumn(0).setMaxWidth(0);
         tblEmpleados.getColumnModel().getColumn(0).setPreferredWidth(0);
-        tblEmpleados.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
-        tblEmpleados.getColumnModel().getColumn(4).setCellEditor(
+        tblEmpleados.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
+        tblEmpleados.getColumnModel().getColumn(5).setCellEditor(
             new ButtonEditor(new JCheckBox(), this::manejarAccionFila)
         );
     }
@@ -58,7 +79,7 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
     }
 
     private void abrirFormularioEmpleado(Integer idEmpleado) {
-        FrmEmpleados frmEmpleados = new FrmEmpleados(idEmpleado);
+        FrmEmpleados frmEmpleados = new FrmEmpleados(idEmpleado, usuarioSesion, esAdminSesion);
         frmEmpleados.setVisible(true);
         dispose();
     }
@@ -71,7 +92,7 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
         String filtroUsuario = txtUsuario.getText().trim();
 
         final StringBuilder sql = new StringBuilder(
-            "SELECT id, codigo, nombre, usuario FROM empleados WHERE activo = 1"
+            "SELECT id, codigo, nombre, usuario, es_admin FROM empleados WHERE activo = 1"
         );
 
         if (!filtroNombre.isEmpty()) {
@@ -89,6 +110,7 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
                 return;
             }
 
+            EsquemaEmpleados.asegurarColumnaEsAdmin(con);
             validarEstructuraEmpleados(con);
 
             try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
@@ -107,6 +129,7 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
                             rs.getString("codigo"),
                             rs.getString("nombre"),
                             rs.getString("usuario"),
+                            rs.getInt("es_admin") == 1 ? "Administrador" : "Empleado",
                             "Editar / Eliminar"
                         });
                     }
@@ -129,9 +152,10 @@ public class FrmListaEmpleados extends javax.swing.JFrame {
             || !columnas.contains("nombre")
             || !columnas.contains("usuario")
             || !columnas.contains("contrasena")
+            || !columnas.contains("es_admin")
             || !columnas.contains("activo")) {
             throw new SQLException(
-                "La tabla empleados debe contener columnas: id, codigo, nombre, usuario, contrasena, activo"
+                "La tabla empleados debe contener columnas: id, codigo, nombre, usuario, contrasena, es_admin, activo"
             );
         }
     }

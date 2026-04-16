@@ -1,22 +1,43 @@
 package vista;
 
 import conexion.Conexion;
+import conexion.EsquemaEmpleados;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
+import modelo.SesionUsuario;
 
 public class FrmEmpleados extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(FrmEmpleados.class.getName());
     private Integer idEmpleadoEdicion;
+    private final String usuarioSesion;
+    private final boolean esAdminSesion;
 
     public FrmEmpleados() {
-        this(null);
+        this(null, SesionUsuario.getUsuario(), SesionUsuario.esAdministrador());
     }
 
     public FrmEmpleados(Integer idEmpleadoEdicion) {
+        this(idEmpleadoEdicion, SesionUsuario.getUsuario(), SesionUsuario.esAdministrador());
+    }
+
+    public FrmEmpleados(Integer idEmpleadoEdicion, String usuarioSesion, boolean esAdminSesion) {
+        this.usuarioSesion = usuarioSesion == null ? "" : usuarioSesion;
+        this.esAdminSesion = esAdminSesion;
+        if (!this.esAdminSesion) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Solo un administrador puede acceder a esta pantalla.",
+                "Acceso denegado",
+                JOptionPane.WARNING_MESSAGE
+            );
+            new FrmMenuPrincipal().setVisible(true);
+            dispose();
+            return;
+        }
         this.idEmpleadoEdicion = idEmpleadoEdicion;
         initComponents();
         setLocationRelativeTo(null);
@@ -40,6 +61,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
         String usuario = txtUsuario.getText().trim();
         String contrasena = new String(txtContrasena.getPassword()).trim();
         String confirmar = new String(txtConfirmarContrasena.getPassword()).trim();
+        int esAdministrador = chkAdministrador.isSelected() ? 1 : 0;
 
         if (codigo.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Ingrese el codigo del empleado.");
@@ -78,9 +100,9 @@ public class FrmEmpleados extends javax.swing.JFrame {
         }
 
         if (idEmpleadoEdicion == null) {
-            insertarEmpleado(codigo, nombre, usuario, contrasena);
+            insertarEmpleado(codigo, nombre, usuario, contrasena, esAdministrador);
         } else {
-            actualizarEmpleado(codigo, nombre, usuario, contrasena);
+            actualizarEmpleado(codigo, nombre, usuario, contrasena, esAdministrador);
         }
     }
 
@@ -95,6 +117,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
                 return false;
             }
+            EsquemaEmpleados.asegurarColumnaEsAdmin(con);
 
             ps.setString(1, usuario);
             if (idActual != null) {
@@ -115,20 +138,24 @@ public class FrmEmpleados extends javax.swing.JFrame {
         }
     }
 
-    private void insertarEmpleado(String codigo, String nombre, String usuario, String contrasena) {
-        final String sql = "INSERT INTO empleados (codigo, nombre, usuario, contrasena, activo) VALUES (?, ?, ?, ?, 1)";
+    private void insertarEmpleado(String codigo, String nombre, String usuario, String contrasena, int esAdministrador) {
+        final String sql = "INSERT INTO empleados (codigo, nombre, usuario, contrasena, es_admin, activo) VALUES (?, ?, ?, ?, ?, 1)";
 
-        try (Connection con = Conexion.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.conectar()) {
             if (con == null) {
                 JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
                 return;
             }
+            EsquemaEmpleados.asegurarColumnaEsAdmin(con);
 
-            ps.setString(1, codigo);
-            ps.setString(2, nombre);
-            ps.setString(3, usuario);
-            ps.setString(4, contrasena);
-            ps.executeUpdate();
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, codigo);
+                ps.setString(2, nombre);
+                ps.setString(3, usuario);
+                ps.setString(4, contrasena);
+                ps.setInt(5, esAdministrador);
+                ps.executeUpdate();
+            }
 
             JOptionPane.showMessageDialog(this, "Empleado guardado correctamente.");
             regresarAListaEmpleados();
@@ -142,31 +169,35 @@ public class FrmEmpleados extends javax.swing.JFrame {
         }
     }
 
-    private void actualizarEmpleado(String codigo, String nombre, String usuario, String contrasena) {
+    private void actualizarEmpleado(String codigo, String nombre, String usuario, String contrasena, int esAdministrador) {
         final boolean actualizarContrasena = !contrasena.isEmpty();
         final String sql;
 
         if (actualizarContrasena) {
-            sql = "UPDATE empleados SET codigo = ?, nombre = ?, usuario = ?, contrasena = ? WHERE id = ?";
+            sql = "UPDATE empleados SET codigo = ?, nombre = ?, usuario = ?, contrasena = ?, es_admin = ? WHERE id = ?";
         } else {
-            sql = "UPDATE empleados SET codigo = ?, nombre = ?, usuario = ? WHERE id = ?";
+            sql = "UPDATE empleados SET codigo = ?, nombre = ?, usuario = ?, es_admin = ? WHERE id = ?";
         }
 
-        try (Connection con = Conexion.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.conectar()) {
             if (con == null) {
                 JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
                 return;
             }
+            EsquemaEmpleados.asegurarColumnaEsAdmin(con);
 
-            int indice = 1;
-            ps.setString(indice++, codigo);
-            ps.setString(indice++, nombre);
-            ps.setString(indice++, usuario);
-            if (actualizarContrasena) {
-                ps.setString(indice++, contrasena);
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                int indice = 1;
+                ps.setString(indice++, codigo);
+                ps.setString(indice++, nombre);
+                ps.setString(indice++, usuario);
+                if (actualizarContrasena) {
+                    ps.setString(indice++, contrasena);
+                }
+                ps.setInt(indice++, esAdministrador);
+                ps.setInt(indice, idEmpleadoEdicion);
+                ps.executeUpdate();
             }
-            ps.setInt(indice, idEmpleadoEdicion);
-            ps.executeUpdate();
 
             JOptionPane.showMessageDialog(this, "Empleado actualizado correctamente.");
             regresarAListaEmpleados();
@@ -181,25 +212,29 @@ public class FrmEmpleados extends javax.swing.JFrame {
     }
 
     private void cargarEmpleadoParaEdicion(int idEmpleado) {
-        final String sql = "SELECT codigo, nombre, usuario FROM empleados WHERE id = ?";
+        final String sql = "SELECT codigo, nombre, usuario, es_admin FROM empleados WHERE id = ?";
 
-        try (Connection con = Conexion.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.conectar()) {
             if (con == null) {
                 JOptionPane.showMessageDialog(this, "No se pudo conectar a la base de datos.");
                 return;
             }
+            EsquemaEmpleados.asegurarColumnaEsAdmin(con);
 
-            ps.setInt(1, idEmpleado);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    JOptionPane.showMessageDialog(this, "No se encontro el empleado seleccionado.");
-                    regresarAListaEmpleados();
-                    return;
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, idEmpleado);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        JOptionPane.showMessageDialog(this, "No se encontro el empleado seleccionado.");
+                        regresarAListaEmpleados();
+                        return;
+                    }
+
+                    txtCodigo.setText(rs.getString("codigo"));
+                    txtNombre.setText(rs.getString("nombre"));
+                    txtUsuario.setText(rs.getString("usuario"));
+                    chkAdministrador.setSelected(rs.getInt("es_admin") == 1);
                 }
-
-                txtCodigo.setText(rs.getString("codigo"));
-                txtNombre.setText(rs.getString("nombre"));
-                txtUsuario.setText(rs.getString("usuario"));
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(
@@ -212,7 +247,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
     }
 
     private void regresarAListaEmpleados() {
-        java.awt.EventQueue.invokeLater(() -> new FrmListaEmpleados().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new FrmListaEmpleados(usuarioSesion, esAdminSesion).setVisible(true));
         dispose();
     }
 
@@ -233,6 +268,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
         txtContrasena = new javax.swing.JPasswordField();
         lblConfirmarContrasena = new javax.swing.JLabel();
         txtConfirmarContrasena = new javax.swing.JPasswordField();
+        chkAdministrador = new javax.swing.JCheckBox();
         btnGuardar = new javax.swing.JButton();
         btnCancelar = new javax.swing.JButton();
 
@@ -275,6 +311,10 @@ public class FrmEmpleados extends javax.swing.JFrame {
         panelFormulario.add(lblConfirmarContrasena, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 260, 160, 20));
         panelFormulario.add(txtConfirmarContrasena, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 280, 250, 30));
 
+        chkAdministrador.setText("Es administrador");
+        chkAdministrador.setOpaque(false);
+        panelFormulario.add(chkAdministrador, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 330, 170, 30));
+
         btnGuardar.setBackground(new java.awt.Color(0, 153, 0));
         btnGuardar.setForeground(new java.awt.Color(255, 255, 255));
         btnGuardar.setText("Guardar");
@@ -308,6 +348,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCancelar;
     private javax.swing.JButton btnGuardar;
+    private javax.swing.JCheckBox chkAdministrador;
     private javax.swing.JLabel lblCodigo;
     private javax.swing.JLabel lblConfirmarContrasena;
     private javax.swing.JLabel lblContrasena;

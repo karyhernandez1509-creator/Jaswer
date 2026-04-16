@@ -6,6 +6,7 @@ package vista;
 
 import login.Login;
 import javax.swing.JOptionPane;
+import modelo.SesionUsuario;
 
 /**
  *
@@ -22,15 +23,23 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         initComponents();
         setLocationRelativeTo(null);
         configurarEventos();
+        aplicarPermisosPorRol();
     }
 
     private void configurarEventos() {
         jButton6.addActionListener(e -> cerrarSesion());
         jButton2.addActionListener(e -> abrirListaProductos());
-        jButton1.addActionListener(e -> abrirListaEmpleados());
+        jButton1.addActionListener(e -> abrirAdministracion());
         jButton3.addActionListener(e -> mostrarFuncionalidadFutura());
         jButton4.addActionListener(e -> mostrarFuncionalidadFutura());
         jButton5.addActionListener(e -> mostrarFuncionalidadFutura());
+    }
+
+    private void aplicarPermisosPorRol() {
+        if (!SesionUsuario.esAdministrador()) {
+            jButton1.setEnabled(false);
+            jButton1.setToolTipText("Solo disponible para usuarios administradores");
+        }
     }
 
     private void abrirListaProductos() {
@@ -39,8 +48,21 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     }
 
     private void abrirListaEmpleados() {
-        new FrmListaEmpleados().setVisible(true);
+        new FrmListaEmpleados(SesionUsuario.getUsuario(), SesionUsuario.esAdministrador()).setVisible(true);
         dispose();
+    }
+
+    private void abrirAdministracion() {
+        if (!SesionUsuario.esAdministrador()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Solo un usuario administrador puede acceder a Administracion.",
+                "Acceso denegado",
+                JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        abrirListaEmpleados();
     }
 
     private void cerrarSesion() {
@@ -52,6 +74,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         );
 
         if (confirmar == JOptionPane.YES_OPTION) {
+            SesionUsuario.cerrarSesion();
             new Login().setVisible(true);
             dispose();
         }
@@ -86,6 +109,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        jButton7 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -115,9 +139,14 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jPanel3.setBackground(new java.awt.Color(250, 250, 250));
         jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jButton1.setText("Administrar Empleados");
+        jButton1.setText("Administracion");
         jButton1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
-        jPanel3.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 160, 120, 100));
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        jPanel3.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 160, 120, 100));
 
         jButton2.setText("Crear y Modificar");
         jButton2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
@@ -135,10 +164,18 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
         jButton5.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
         jPanel3.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 40, 120, 100));
 
+        jButton7.setText("Reportes");
+        jButton7.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)));
+        jPanel3.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 160, 120, 100));
+
         getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 70, 580, 710));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -172,6 +209,7 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
+    private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;

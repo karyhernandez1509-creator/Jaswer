@@ -13,7 +13,7 @@ public class Conexion {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             con = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/jaswer1",
+                "jdbc:mysql://localhost:3306/jaswer",
                 "root",
                 "Tvfhwd_03"
             );
