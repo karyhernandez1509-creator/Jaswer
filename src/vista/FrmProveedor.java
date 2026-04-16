@@ -274,7 +274,6 @@ public class FrmProveedor extends javax.swing.JFrame {
         jButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(900, 780));
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         panelHeader.setBackground(new java.awt.Color(0, 0, 153));
@@ -322,8 +321,6 @@ public class FrmProveedor extends javax.swing.JFrame {
         jLabel8.setForeground(new java.awt.Color(51, 204, 255));
         jLabel8.setText("Direccion");
         jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 30, 150, 20));
-        jLabel8.getAccessibleContext().setAccessibleName("Direccion");
-
         jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 350, 170, 25));
 
         jLabel9.setText("Telefono 2:");

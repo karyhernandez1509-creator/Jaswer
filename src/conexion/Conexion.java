@@ -13,9 +13,9 @@ public class Conexion {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             con = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/jaswer",
+                "jdbc:mysql://localhost:3306/jaswer1",
                 "root",
-                "Kary123"
+                "Tvfhwd_03"
             );
 
             System.out.println("Conexion exitosa");
