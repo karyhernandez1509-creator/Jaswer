@@ -119,8 +119,8 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("JASWER DEL SOFTWARE");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 300, 30));
+        jLabel1.setText("JASWER DEL SOFTWARE Proyecto de: Garcia Karen y Vasconez Cristopher");
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 670, 30));
 
         jButton6.setBackground(new java.awt.Color(0, 153, 204));
         jButton6.setText("Cerrar Sesión");
